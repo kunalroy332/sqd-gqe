@@ -1,0 +1,32 @@
+# Cross-attention conditioned transformer policy.
+#
+# Same constructor signature as model=conditioned, so the factory instantiates it
+# with no code change -- only _target_ differs. Select with `model=crossattn`.
+#
+# The difference from the additive path is where the conditioning enters. The
+# additive policy collapses it to one vector and adds it at every token position,
+# which pins the prompt length at 1. Here the encoder emits a prompt of arbitrary
+# length and GPT-2's own cross-attention layers attend to it, so an encoder whose
+# natural output is per-orbital (norb vectors) or per-atom (n_atoms vectors) needs
+# no pooling first -- and a measured difference is then attributable to the encoder
+# rather than to how it was pooled.
+#
+# Cross-attention is native to HuggingFace GPT-2, not something added here:
+# GPT2Config carries add_cross_attention (default False), and GPT2Block builds
+# self.crossattention + self.ln_cross_attn when it is True. Measured on
+# transformers 4.57.3, CrossAttnPolicy has 36 crossattention modules (6 layers x 6)
+# against 0 for the additive policy, and 56.74M parameters against 42.68M -- the
+# 14.06M difference being those layers. Changing the prompt changes the logits
+# (max|Δlogp| = 1.23), so the layers are actually consulted, and prompt lengths
+# 1/5/12/23 all run through unchanged, while handing the additive path 23 vectors
+# raises RuntimeError.
+#
+# NOTE: this config covers the POLICY only. The prompt encoder that feeds it is
+# selected separately by `amortized_train.py --encoder {null|scalar27|
+# scalar27_epsfix|orbital_set|posegnn}`, since which encoder to use is a property
+# of the experiment arm rather than of the transformer core. Using this config
+# without setting an encoder leaves the prompt unset, and the policy then runs
+# unconditioned.
+_target_: sqd_gqe.core.models.crossattn.CrossAttnPolicy
+small: true
+repetition_penalty: 1.2

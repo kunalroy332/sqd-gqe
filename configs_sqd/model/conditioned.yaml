@@ -1,0 +1,6 @@
+# Molecule/backend-conditioned transformer policy (for the amortized generalist).
+# Same constructor signature as the plain policy, so the factory builds it via
+# instantiate() with no code change. Swap the transformer core here in future.
+_target_: sqd_gqe.core.models.conditioned.ConditionedTransformerPolicy
+small: true
+repetition_penalty: 1.2

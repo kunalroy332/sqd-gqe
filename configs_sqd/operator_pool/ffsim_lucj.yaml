@@ -1,0 +1,19 @@
+# ffsim-native LUCJ/UCJ + local-primitive operator pool.
+spec: "ffsim_lucj"
+params: null            # explicit angle override for local primitives (Givens/diag-Coulomb/
+                        # num-num); if set, wins outright and angle_source below is ignored
+angle_source: "ffsim_native"  # how to derive the local primitives' angles from CCSD when
+                        # params is null -- "ffsim_native" (default, best accuracy: derived
+                        # from ffsim's own t2 double-factorization + t1 orbital-rotation-
+                        # generator eigenstructure, the same machinery the CCSD-seeded LUCJ
+                        # op uses internally) | "rms" (cruder RMS-of-amplitudes heuristic,
+                        # highest training-gate pass rate but worse accuracy when it passes
+                        # -- see FfsimLUCJPool._ccsd_scaled_angles's docstring for the
+                        # measured numbers on N2/16q). Neither is a fixed pi/4, pi/2 constant.
+n_reps: null            # UCJ repetitions; null -> from CCSD double-factorization
+include_orbital_rotations: true
+include_givens: true
+include_diag_coulomb: true
+include_num_num: true
+n_orbital_rotations: 4
+seed: 0

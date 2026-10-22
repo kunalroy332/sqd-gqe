@@ -1,0 +1,10 @@
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: linear_chain
+  atoms: ['N', 'N']
+  bond_length: 2.5
+basis: 'sto-3g'
+nelecas: 10
+norbcas: 8      # 8 spatial orbitals = 16 qubits (ffsim ceiling for this study)
+spin: 0
+charge: 0

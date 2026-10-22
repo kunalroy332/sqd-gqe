@@ -1,0 +1,3 @@
+_target_: sqd_gqe.core.models.transformer.TransformerPolicy
+small: true
+repetition_penalty: 1.2

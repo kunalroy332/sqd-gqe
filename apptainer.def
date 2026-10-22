@@ -1,0 +1,64 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:25.10-py3
+
+%labels
+    Architecture aarch64
+    Application SQD-GQE
+    Backend ffsim
+
+%files
+    . /opt/sqd-gqe
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export PIP_NO_CACHE_DIR=1
+    export PIP_CONSTRAINT=""
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+        python3-dev \
+        python3-pip
+    rm -rf /var/lib/apt/lists/*
+
+    python3 -m pip install --upgrade pip "setuptools<82" wheel hatchling
+
+    # Runtime dependencies of the SQD workflow.
+    python3 -m pip install \
+        "pytorch-lightning==2.6.1" \
+        "scipy~=1.15.3" \
+        "hydra-core==1.3.2" \
+        "omegaconf==2.3.0" \
+        "transformers==4.57.3" \
+        "qiskit==2.5.1" \
+        "qiskit-ibm-runtime==0.49.0" \
+        "qiskit-aer==0.17.2" \
+        "qiskit-addon-sqd==0.12.1" \
+        "qiskit-qasm3-import==0.6.0" \
+        "ffsim>=0.0.55" \
+        "pyscf==2.11.0" \
+        "wandb>=0.23.1" \
+        "matplotlib>=3.8" \
+        "ipykernel==6.30.0"
+
+    # Install this repository; its dependencies are installed above.
+    python3 -m pip install --no-deps /opt/sqd-gqe
+
+    # The NGC 25.10 base reports its development TorchAO build as 0.14.0,
+    # but it does not contain the safetensors API that Transformers 4.57.3
+    # conditionally imports for TorchAO >=0.14. SQD-GQE does not use TorchAO,
+    # so remove the optional integration instead of allowing it to break GPT-2.
+    python3 -m pip uninstall -y torchao
+
+%environment
+    export PYTHONUNBUFFERED=1
+    export PIP_NO_CACHE_DIR=1
+    export OMP_NUM_THREADS=1
+
+%runscript
+    exec python3 /opt/sqd-gqe/train_sqd.py "$@"
+
+%test
+    test "$(uname -m)" = "aarch64"
+    python3 -c "import torch, ffsim, qiskit, qiskit_ibm_runtime, sqd_gqe; from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2; from sqd_gqe.core.models.transformer import TransformerPolicy; print(torch.__version__, qiskit.__version__, qiskit_ibm_runtime.__version__)"

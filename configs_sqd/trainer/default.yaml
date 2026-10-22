@@ -1,0 +1,22 @@
+seed: 32
+max_iters: 100
+num_samples: 10      # circuits generated per iteration
+batch_size: 10       # equal to num_samples for on-policy training
+step_per_epoch: 30   # policy updates per iteration
+warmup_size: 10
+buffer_size: 10      # equal to num_samples for on-policy training
+load_checkpoint: true
+checkpoint_every_n_iters: 10
+optimizer:
+  lr: 5e-6
+  cls: AdamW
+  weight_decay: 0.01
+loss:
+  type: "grpo"
+  clip_grpo_low: 0.2
+  clip_grpo_high: 0.28
+beta_schedule:
+  _target_: sqd_gqe.core.schedule.VarianceBeta
+  initial: 0.5
+  delta: 0.02
+  target_var: 1e-5

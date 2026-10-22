@@ -1,0 +1,10 @@
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: linear_chain
+  atoms: ['N', 'N']
+  bond_length: 2.5
+basis: '6-31g'   # larger basis to reach 14 active orbitals (matches the paper's 28q point)
+nelecas: 10
+norbcas: 14      # 14 spatial orbitals = 28 qubits
+spin: 0
+charge: 0

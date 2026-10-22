@@ -1,0 +1,125 @@
+project:
+  name: sqd-gqe
+exp_tag: default-${now:%Y-%m-%d-%H-%M-%S}
+output: outputs/${project.name}/${exp_tag}
+
+hydra:
+  run:
+    dir: ${output}
+  output_subdir: hydra
+
+wandb:
+  project: ${project.name}
+  name: ${exp_tag}
+  dir: ${output}
+
+ngates: 10
+reference_keys: ["R-CASCI", "R-CCSD"]
+
+sampler:
+  shots: 100_000
+  rayon_threads: null
+  depth_noise: null      # [d0, tau, p_max]: extra per-bit flip prob p_max*(1-exp(-(depth-d0)/tau)) from the transpiled depth (needs a *_noisy_sim backend)
+  p_readout_beta: null   # separate beta-register flip prob (null: same as p_readout)
+  p_readout: 0.0   # readout bit-flip prob; >0 uses the noisy sampler   # ffsim Rust thread count; null -> ffsim default
+  amplitude_damping: false   # T1-decay-derived directional (1->0) flip prob, scaled by real
+                              # 2q-gate count; only active with a *_noisy_sim backend
+  kind: "ffsim"          # "ffsim" (default, existing behavior) | "ibm_hardware" (real/fake
+                         # IBM Quantum sampling via IbmHardwareSampler, one Runtime job per batch)
+  ibm_backend_name: null  # required when kind="ibm_hardware", e.g. "ibm_kingston"
+  ibm_channel: null       # defaults to "ibm_quantum_platform" if unset
+  ibm_instance: null      # defaults to $IBM_CRN env var if unset -- never hardcode a CRN here
+  ibm_fake_backend: false # true -> AerSimulator/fake_provider, no credentials/queue/cost
+  ibm_save_dir: null      # when set, IbmHardwareSampler saves raw+decoded counts (JSON) and
+                          # transpiled circuits (QPY) under ibm_save_dir/<backend>_shots<n>/<job_id>/
+                          # -- lets a real-hardware result be re-diagonalized or its circuits
+                          # visualized later without resubmitting, and checked for reproducibility
+  ibm_dynamical_decoupling: false  # SamplerV2 dynamical decoupling (idles qubits with an echo
+                                   # sequence during gate-free windows instead of leaving them
+                                   # exposed to dephasing) -- was never configured before Stage F's
+                                   # 46q real-hardware collapse investigation found it off by default
+  ibm_dd_sequence_type: "XpXm"    # only used when ibm_dynamical_decoupling=true
+  ibm_init_qubits: true           # explicit active qubit reset before each shot (was already
+                                   # Runtime's own default; set explicitly rather than relying on it)
+  ibm_session_mode: false         # true -> keep all iterative SamplerV2 jobs in one Runtime Session
+  ibm_session_max_time: null      # optional Session TTL, e.g. "25m" or 1500; subject to plan limits
+
+sqd:
+  max_dim: 2000
+  enlarge_method: "symmetry_completion"
+  max_cycle: 1000
+  diag_backend: "sqd"   # "sqd" (qiskit-addon-sqd) | "fci" (parity check) | "sbd" (GPU, RHF-only,
+                        # energy-only -- see sqd_gqe/sqd/backend_sbd_gpu.py's module docstring
+                        # before using this for anything beyond direct energy comparison)
+  spin_sq: 0.0          # target spin sector for solve_sci; null to disable
+  sbd_binary_path: null # path to the native diag-gpu binary; required when diag_backend="sbd"
+  sbd_launcher: ["mpirun", "-np", "1"]  # NOT srun -- ROQUO's srun cannot bootstrap the HPC-X
+                                        # OpenMPI 5 diag-gpu links against (confirmed: srun hangs
+                                        # indefinitely, 0% GPU util, even on a 322-determinant
+                                        # subspace; mpirun -np 1 completes the same call in 2.3s).
+                                        # Requires `module load hpcx/2.50` (not bundled with
+                                        # nvhpc/26.5 despite the sibling repo's README implying it
+                                        # is) for mpirun to be on PATH.
+  sbd_timeout_s: 600
+  recover_iterations: 5  # >0 switches each sampled circuit's reward energy from a
+                         # one-shot diagonalize() to recover_and_diagonalize()'s
+                         # self-consistent configuration-recovery loop (this many
+                         # steps). 0 keeps the old cheap one-shot reward.
+  refine_method: "gevp"     # "gevp" (non-orthogonal GEVP, default) | "ufd" (determinant union, exact dense
+                            # solve -- small systems; unions above ufd_dense_limit are pre-truncated; not on sbd) | "tp_ufd"
+                            # (alpha/beta half-string union -> tensor closure; RHF only; not on fci; marginal compression
+                            # on sqd/fci, SBD carryover compression on sbd)
+  global_refine: "bounded"  # "bounded" (prev retained U local -> truncate to max_dim) | "cumulative"
+                            # (prev retained U local U every circuit of the batch, capped at cumulative_max_dim)
+  cumulative_max_dim: 5_000_000
+  tp_ufd_n_alpha: null      # half-string budget for tp_ufd; null -> isqrt(max_dim) (retained dim = n_alpha^2)
+  ufd_dense_limit: 20_000   # max union size for refine_method="ufd" (dense solver)
+  refine_input: "oneshot"   # "oneshot" (refine the one-shot per-circuit states, default) | "recovered"
+                            # (when recover_iterations>0, refine the recovery loop's final states instead;
+                            # on sbd only the recovered alpha list is available -> use with tp_ufd)
+  recover_subspace_dim: null  # alpha-determinant count for recover_and_diagonalize's
+                         # GPU (sbd) step each iteration (RHF: net dim = this^2).
+                         # null derives it from max_dim (sqrt(max_dim)) in
+                         # factory.py; set explicitly to override independently.
+  use_sparse_refine_hamiltonian: true  # refine.py's subspace-restricted Hamiltonian
+                         # build (default) vs. the original full-active-space FCI
+                         # contraction (false) -- verified numerically identical
+                         # to 1e-13..1e-32 on real molecules, >8000x faster at
+                         # co2/d-block (28-30q) scale. Set false only to
+                         # cross-check against the original implementation.
+  max_depth_for_diag: null  # null: diagonalize every sampled circuit regardless of depth
+                         # (default, matches all behavior before this flag existed). Set to
+                         # an int to skip diagonalize()/recover() for any circuit whose
+                         # transpiled depth (real hardware) / pool-sequence length (ffsim)
+                         # exceeds it -- energy=inf so it can never win "keep the best of
+                         # the batch", but its SqdSample (depth, diagonalize_skipped_deep,
+                         # hardware counts) is still recorded. run.py's zero-shot CLI
+                         # defaults this to the chosen backend's own hw.depth_budget when
+                         # not explicitly overridden.
+  sbd_solver_kwargs:
+    task_comm_size: 1
+    adet_comm_size: 1
+    bdet_comm_size: 1
+    block: 20
+    iteration: 5
+    tolerance: 0.01
+    carryover_ratio: 0.5
+    carryover_type: 1
+    rdm: 0
+
+# When true, factory.build_pipeline predicts max_dim/shots from ResourceHead
+# (see core/conditioning.py) instead of using the fixed sqd.max_dim/sampler.shots
+# above, and the pipeline diagonalizes via SqdPipeline.run_adaptive (doubling
+# the subspace size until the energy stops moving) instead of a fixed max_dim.
+# Off by default so existing configs/behavior are unaffected.
+dynamic_resources: false
+resource_head_checkpoint: "experiments/amortized/resource_head.pt"
+
+defaults:
+  - model: transformer
+  - molecule: n2
+  - trainer: default
+  - operator_pool: ffsim_lucj
+  - _self_
+
+vocab_size: 0  # overwritten by the factory from the operator-pool size
