@@ -3,28 +3,22 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^(molecules/.*\.fcidump|.*\.ipynb)$
       - id: end-of-file-fixer
+        exclude: ^(molecules/.*\.fcidump|.*\.ipynb)$
       - id: check-yaml
+        exclude: ^molecules/.*\.yaml$
 
   - repo: local
     hooks:
-      - id: run-python-script
-        name: Verify headers
-        entry: python tools/verify_headers.py --omit project_name/_version.py project_name test tools
+      - id: verify-headers
+        name: Verify IBM copyright headers
+        entry: python tools/verify_headers.py
         language: system
         types: [python]
-        exclude: ^docs
+        pass_filenames: true
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4
     hooks:
-      # Run the linter.
       - id: ruff
-        args: [ --fix ]
-      # Run the formatter.
-      - id: ruff-format
-
-  - repo: https://github.com/twisted/towncrier
-    rev: 24.8.0
-    hooks:
-      - id: towncrier-check

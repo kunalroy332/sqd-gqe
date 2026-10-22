@@ -1,111 +1,84 @@
 #!/usr/bin/env python3
-# This code is part of the Project Name project.
+# This code is a Qiskit project.
 #
-# This is proprietary IBM software for internal use only, do not distribute outside of IBM
-# Unauthorized copying of this file is strictly prohibited
+# (C) Copyright IBM 2026.
 #
-# (C) Copyright IBM 2024.
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
 
-"""Utility script to verify copyright file headers."""
+"""Check (and with --fix, add) the IBM copyright header of every Python file.
 
+    python tools/verify_headers.py [--fix] [paths ...]
+
+The header must appear in the first lines of the file, after an optional shebang. A shebang line stays first.
+"""
 import argparse
-import re
 import sys
-from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import Iterable
 
-# regex for character encoding from PEP 263
-pep263 = re.compile(r"^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)")
-allow_path = re.compile(r"^[-_a-zA-Z0-9]+")
-
-HEADER = """# This code is part of the Project Name project.
+HEADER = """# This code is a Qiskit project.
 #
-# This is proprietary IBM software for internal use only, do not distribute outside of IBM
-# Unauthorized copying of this file is strictly prohibited
-#"""
+# (C) Copyright IBM 2026.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+"""
+SKIP_DIRS = {".git", ".venv", "venv", "build", "dist", "__pycache__", "node_modules"}
 
 
-def discover_files(
-    roots: Iterable[str],
-    extensions: set[str] = frozenset({".py", ".pyx", ".pxd"}),
-    omit: str = "",
-) -> Iterable[str]:
-    """Find all .py, .pyx, .pxd files in a list of trees."""
-    for code_path in roots:
-        path = Path(code_path)
-        if path.is_dir():
-            # Recursively search for files with the specified extensions
-            for file in path.rglob("*"):
-                if file.suffix in extensions and not file.match(omit):
-                    yield str(file)
+def python_files(roots):
+    for root in roots:
+        p = Path(root)
+        if p.is_file():
+            yield p
+            continue
+        for f in p.rglob("*.py"):
+            if not (set(f.parts) & SKIP_DIRS):
+                yield f
 
 
-def validate_header(file_path: str) -> tuple[str, bool, str]:
-    """Validate the header for a single file."""
-    with open(file_path, encoding="utf8") as fd:
-        lines = fd.readlines()
-    start = 0
-    for index, line in enumerate(lines):
-        if index > 5:
-            return file_path, False, "Header not found in first 5 lines"
-        if index <= 2 and pep263.match(line):
-            return (
-                file_path,
-                False,
-                "Unnecessary encoding specification (PEP 263, 3120)",
-            )
-        if line.strip().startswith(HEADER.split("\n", maxsplit=1)[0]):
-            start = index
-            break
-
-    for idx, (actual, required) in enumerate(zip(lines[start:], HEADER.split("\n"))):
-        if (actual := actual.strip()) != (required := required.strip()):
-            return (
-                file_path,
-                False,
-                f"Header line {1 + start + idx} '{actual}' does not match '{required}'.",
-            )
-    if not lines[start + 5].startswith("# (C) Copyright IBM 20"):
-        return (file_path, False, "Header copyright line not found")
-    return file_path, True, None
+def has_header(text: str) -> bool:
+    lines = text.splitlines()
+    start = 1 if lines and lines[0].startswith("#!") else 0
+    return "\n".join(lines[start:start + len(HEADER.splitlines())]) == HEADER.rstrip("\n")
 
 
-def main():
-    default_path = Path(__file__).resolve().parent.parent / "project_name"
+def add_header(text: str) -> str:
+    lines = text.splitlines(keepends=True)
+    if lines and lines[0].startswith("#!"):
+        return lines[0] + HEADER + "\n" + "".join(lines[1:])
+    return HEADER + "\n" + text
 
-    parser = argparse.ArgumentParser(description="Check file headers.")
-    parser.add_argument(
-        "paths",
-        type=Path,
-        nargs="*",
-        default=[default_path],
-        help="Paths to scan; defaults to '../project_name' relative to the script location.",
-    )
-    parser.add_argument(
-        "-o",
-        "--omit",
-        type=str,
-        default="",
-        help="Glob of files to omit.",
-    )
-    args = parser.parse_args()
 
-    python_files = discover_files(map(str, args.paths), omit=args.omit)
-    with ProcessPoolExecutor() as executor:
-        results = executor.map(validate_header, python_files)
-
-    failed_files = [
-        (file_path, err) for file_path, success, err in results if not success
-    ]
-    if failed_files:
-        for file_path, error_message in failed_files:
-            sys.stderr.write(f"{file_path} failed header check because:\n")
-            sys.stderr.write(f"{error_message}\n\n")
-        sys.exit(1)
-
-    sys.exit(0)
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fix", action="store_true")
+    ap.add_argument("paths", nargs="*", default=["."])
+    a = ap.parse_args()
+    bad = 0
+    for f in sorted(python_files(a.paths)):
+        text = f.read_text(encoding="utf8")
+        if has_header(text):
+            continue
+        if a.fix:
+            f.write_text(add_header(text), encoding="utf8")
+        else:
+            print(f"missing or wrong header: {f}")
+            bad += 1
+    if bad:
+        print(f"{bad} file(s) without the IBM header; run with --fix")
+    return 1 if bad else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

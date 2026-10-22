@@ -55,4 +55,4 @@ jobs:
         # hook during automated runs (in case any pre-commit-driven checks run
         # as part of the test suite).
         working-directory: repo
-        run: SKIP=no-commit-to-branch uv run pytest -v
+        run: SKIP=no-commit-to-branch uv run pytest -q

@@ -1,187 +1,45 @@
-# Python with Ruff Template Repo
+# sqd-gqe
 
-This is a template for a repo that
-- Defines a Python package
-- Uses `ruff` for linting and formatting. Ruff is a fast all-in-one tool that replaces
-  - `pylint`
-  - `black`
-  - `flake8`
-  - `isort`
-  - `...`
-- Uses `towncrier` for changelog management.
-- Uses `setuptools_scm` for versioning.
+> [!NOTE]
+> This repository is under active development and the code here should not be considered stable. This is not an officially supported IBM Quantum software.
 
-To use this template, do a find-all-replace for each of:
- - `Project Name`
- - `project_name`
- - `project-name`
+Sample-based quantum diagonalization (SQD) needs good circuits to sample the electronic configurations that matter, and fixed ansätze such as LUCJ become deep as active spaces grow. `sqd-gqe` trains a transformer policy, a generative quantum eigensolver (GQE), that writes the state-preparation circuit token by token from a pool of particle-number-conserving operators, conditioned on the molecule. The policy is trained first on a noiseless simulator ([ffsim](https://github.com/qiskit-community/ffsim)) and then on an IBM quantum processor, with a reward built from the SQD energy and circuit cost. At inference the trained policy proposes circuits for molecules it has not seen, which are sampled on hardware and diagonalized with [qiskit-addon-sqd](https://github.com/Qiskit/qiskit-addon-sqd) and a GPU configuration-recovery step. We use it on 32- to 70-qubit active spaces of tin-organometallic molecules, against DMRG references.
+
+## Publication
+
+*Sample-Based Quantum Diagonalization with a Generative Quantum Eigensolver Scaled Up to 70 Qubits*, K. Kumar *et al.* (manuscript in preparation; a DOI or arXiv reference will be added here once it is available).
 
 ## Installation
 
-### Prerequisites
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
-This project uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python package management. Install uv first:
+Python 3.10 or newer is required; a GPU is recommended for training. Running on IBM hardware needs credentials: copy `.env.example` to `.env.local` and fill it in (never commit it). See [`tutorial/03_environment_setup.md`](tutorial/03_environment_setup.md) for cluster setup.
+
+## Usage
 
 ```bash
-# macOS and Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Or via pip
-pip install uv
+python train_sqd.py                                   # train the policy (configuration in configs_sqd/)
+python -m sqd_gqe.run --molecule molecules/small/h2o.yaml --backend ideal   # circuit and chemistry report (small molecule, simulator)
+pytest -q                                             # unit tests
 ```
 
-### Installing the Package
+The notebooks in [`tutorial/`](tutorial) walk through training and inference on the simulator and on IBM hardware. The scripts that regenerate the inference analysis are in [`scripts/analysis/`](scripts/analysis) (see [`scripts/analysis/training2/REPRODUCE.md`](scripts/analysis/training2/REPRODUCE.md)); Slurm templates are in [`slurm/`](slurm) and use placeholders (`<SLURM_ACCOUNT>`, `/path/to/...`) that you must replace.
 
-You can install Project Name using uv:
+## Repository layout
 
-```bash
-uv pip install .
-```
+| Path | Contents |
+|---|---|
+| `sqd_gqe/` | Library: policy and encoders, operator pool, ffsim sampler, SQD pipeline, IBM hardware sampler, recovery and refinement |
+| `configs_sqd/` | Hydra configuration for training |
+| `molecules/` | Molecule and active-space definitions (YAML and FCIDUMP) |
+| `benchmark/` | Amortized multi-molecule trainer and analysis tools |
+| `scripts/analysis/` | Inference and circuit-analysis pipeline |
+| `slurm/`, `apptainer.def` | Cluster job templates and container definition |
+| `test/`, `tests/` | Unit tests |
 
-Developers should install in editable mode with the development requirements:
+## Contributing and license
 
-```bash
-uv pip install -e ".[dev]"
-```
-
-Alternatively, use uv's sync command to install from the lock file:
-
-```bash
-uv sync --all-extras
-```
-
-### Virtual Environment Management
-
-uv automatically manages virtual environments. To create and activate a virtual environment:
-
-```bash
-# Create a virtual environment (if not already created)
-uv venv
-
-# Activate it (Linux/macOS)
-source .venv/bin/activate
-
-# Activate it (Windows)
-.venv\Scripts\activate
-```
-
-You can also run commands directly without activating the environment using `uv run`:
-
-```bash
-uv run python script.py
-uv run pytest
-```
-
-## Development
-
-### Testing
-
-Testing is done with `pytest`, with tests located in the `test` folder:
-
-```bash
-uv run pytest
-```
-
-Or run pytest directly if you've activated a virtual environment:
-
-```bash
-pytest
-```
-
-### Linting and Formatting
-
-We use ruff for linting and formatting. Run the following to manually apply checks:
-
-```bash
-uv run ruff check .
-```
-
-Or if you have ruff installed globally or in an activated environment:
-
-```bash
-ruff check .
-```
-
-More conveniently, set up ruff in your IDE to run-on-save.
-
-### Releasing a version
-
-Versions are managed completely with git tags, no files nede to be written to.
-To create a new version pointing at your current state of `main`,
-
-```bash
-git checkout main  # make sure you're on head
-git tag -a 1.2.3   # make an annotated tag 1.2.3
-git push --tags    # push the tags to origin
-```
-
-Note that the second step uses `-a` which causes the tag to be annotated with some text. This text will appear on the github tag/release pages. Alternatively, github has a GUI for adding annotated tags which may be more convenient because you can see markdown rendered. This GUI can be used instead of the three commands above.
-
-### Managing the Changelog with Towncrier
-
-We use [Towncrier](https://towncrier.readthedocs.io/) for changelog management.
-For a pull request with number `42`,
-
-1. Create a [new fragment](https://towncrier.readthedocs.io/en/stable/tutorial.html#creating-news-fragments) file in the `changelog.d/` directory:
-
-```bash
-echo "Added a new particle weighting system." > changelog.d/42.feature.rst
-```
-
-2. Before releasing a new version, generate the changelog:
-
-```bash
-uv run towncrier build --yes
-```
-
-### Pre-commit Hooks
-
-We use `pre-commit` to ensure code quality and consistency before committing changes.
-It automatically runs linters and formatters on staged files during `git commit`.
-This will have been installed as a part of the developer requirements.
-
-
-1. Install the hooks defined in the .pre-commit-config.yaml file:
-
-```bash
-pre-commit install
-```
-
-2. Test the hooks on all files (optional):
-
-```bash
-pre-commit run --all-files
-```
-
-3. To update the pre-commit hooks to their latest versions, run:
-
-```bash
-pre-commit autoupdate
-```
-
-### VSCode Setup
-
-Here are my recommended settings for `.vscode/settings.json` for this project.
-They cause ruff to format and fix on save, they setup the testing tab, and they disable
-other linters and formatters from running because ruff does it all.
-
-```json
-{
-    "python.testing.pytestArgs": [
-        "test"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "[python]": {
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit",
-        "source.organizeImports": "explicit"
-        },
-        "editor.defaultFormatter": "charliermarsh.ruff"
-    }
-}
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Released under the [Apache-2.0 license](LICENSE).
