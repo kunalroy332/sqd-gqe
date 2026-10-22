@@ -1,0 +1,58 @@
+name: tests
+
+on:
+  push:
+    branches: [main, tests]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    # Same runner label as .github/workflows/manual.yml; this is an IBM-hosted
+    # runner on github.ibm.com configured for org workloads.
+    #
+    # NOTE: ibm-q-research repos typically have Actions config with
+    # allowed_actions=local_only, so we cannot use marketplace actions like
+    # actions/checkout or astral-sh/setup-uv. Everything is done via shell.
+    # Verify your repo's policy with:
+    #   GH_HOST=github.ibm.com gh api /repos/<org>/<repo>/actions/permissions
+    #
+    # NOTE on private deps: this template has no private dependencies. If you
+    # add private github.ibm.com deps via uv, the default ${{ github.token }}
+    # is scoped to THIS repo only and cannot read sibling private repos. To
+    # make CI green in that case, add an authentication step that uses one of:
+    #   - secret INTERNAL_REPO_TOKEN: a PAT with read access to the dep repos.
+    #   - secret INTERNAL_SSH_KEY: a PEM private key whose public counterpart
+    #     is registered as a deploy key on each dep repo.
+    # See proglib (ibm-q-research/proglib) for a worked example.
+    runs-on: ibm-x86-64-small
+    steps:
+      - name: Clone repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git clone --depth=1 --branch "${GITHUB_REF_NAME}" \
+            "https://x-access-token:${GH_TOKEN}@github.ibm.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          git checkout "${GITHUB_SHA}"
+
+      - name: Install uv + Python 3.11
+        run: |
+          set -euo pipefail
+          if command -v dnf >/dev/null 2>&1; then
+            dnf install -y python3.11-pip python3.11 python3.11-devel || true
+          fi
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Sync dependencies
+        working-directory: repo
+        run: uv sync --all-extras
+
+      - name: Run pytest
+        # SKIP=no-commit-to-branch disables the pre-commit branch-protection
+        # hook during automated runs (in case any pre-commit-driven checks run
+        # as part of the test suite).
+        working-directory: repo
+        run: SKIP=no-commit-to-branch uv run pytest -v
