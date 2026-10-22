@@ -1,0 +1,11 @@
+# N2 — the paper's reference system (16 qubits). RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: linear_chain
+  atoms: ['N', 'N']
+  bond_length: 1.10
+basis: 'sto-3g'
+nelecas: 10
+norbcas: 8      # 16 qubits
+spin: 0
+charge: 0

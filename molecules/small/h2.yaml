@@ -1,0 +1,11 @@
+# H2 — smallest test case (4 qubits). RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: linear_chain
+  atoms: ['H', 'H']
+  bond_length: 0.74
+basis: 'sto-3g'
+nelecas: 2
+norbcas: 2      # 4 qubits
+spin: 0
+charge: 0

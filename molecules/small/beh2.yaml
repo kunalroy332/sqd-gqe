@@ -1,0 +1,14 @@
+# BeH2 — linear, common strong-correlation benchmark. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['Be', [0.000000, 0.000000, 0.000000]],
+    ['H', [0.000000, 0.000000, 1.326000]],
+    ['H', [0.000000, 0.000000, -1.326000]],
+  ]
+basis: 'sto-3g'
+nelecas: 6
+norbcas: 7      # 14 qubits
+spin: 0
+charge: 0

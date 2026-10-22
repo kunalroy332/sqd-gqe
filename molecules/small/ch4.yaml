@@ -1,0 +1,16 @@
+# Methane — tetrahedral. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['C', [0.000000, 0.000000, 0.000000]],
+    ['H', [0.629118, 0.629118, 0.629118]],
+    ['H', [-0.629118, -0.629118, 0.629118]],
+    ['H', [-0.629118, 0.629118, -0.629118]],
+    ['H', [0.629118, -0.629118, -0.629118]],
+  ]
+basis: 'sto-3g'
+nelecas: 8
+norbcas: 8      # 16 qubits
+spin: 0
+charge: 0

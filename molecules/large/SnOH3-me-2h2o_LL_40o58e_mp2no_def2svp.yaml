@@ -1,0 +1,37 @@
+# SnOH3-me-2h2o, active space "LL" (40o,58e) from Mitsubishi's MP2-NO-based
+# selection (molecules/large/QC_2026-09-20_calc_MP2-NO-based-AS-Selection-SnOH3Me-nH2O.pdf,
+# MO11-50, 1-indexed). Built on the imported Gaussian MP2 natural
+# orbitals from SnOH3-me-2h2o_s0_mp2_def2svp_FC.fchk (not fresh HF canonical MOs) -- see
+# benchmark/snoh3_nh2o_active_spaces.py.
+#
+# FCI dim = 5.344e+18 -- exceeds FCI_DIM_LIMIT (5e7), so
+# casci_energy() raises FciIntractableError here; use ccsd_t_energy() or an
+# SQD self-convergence reference instead.
+_target_: sqd_gqe.core.system.MolecularSystem.from_fcidump
+fcidump_path: molecules/large/SnOH3-me-2h2o_LL_40o58e_mp2no_def2svp.fcidump
+geometry:
+  type: custom
+  geometry: [
+    ['Sn', [-0.22120963, 0.17856499, 0.00303651]],
+    ['O', [-1.42634917, 0.33913450, -1.58665332]],
+    ['O', [1.39170040, 1.22160371, -0.69118495]],
+    ['O', [0.54629357, -1.65097827, 0.08717011]],
+    ['C', [-0.70190681, 1.20856187, 1.79119872]],
+    ['H', [0.06878658, 1.96422287, 1.98761912]],
+    ['H', [1.49455433, 1.13269857, -1.64861539]],
+    ['H', [-0.75529498, 0.49680342, 2.62423391]],
+    ['H', [-1.67693954, 1.69938302, 1.67765028]],
+    ['H', [-1.11441619, 0.98844760, -2.22867534]],
+    ['H', [1.52301285, -1.59210778, 0.08761714]],
+    ['O', [-2.04359410, -1.36184483, 0.33842659]],
+    ['H', [-2.43374811, -1.26162430, -0.54529599]],
+    ['H', [-1.44989673, -2.13012094, 0.26111842]],
+    ['O', [3.19527906, -0.69172241, 0.11359528]],
+    ['H', [2.75081976, 0.13109000, -0.18014781]],
+    ['H', [3.55840599, -0.45795501, 0.97464794]],
+  ]
+basis: 'def2-svp'
+ecp:
+  Sn: 'def2-svp'
+spin: 0
+charge: 0

@@ -1,0 +1,15 @@
+# Formaldehyde CH2O — planar. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['O', [0.000000, 0.000000, 0.674200]],
+    ['C', [0.000000, 0.000000, -0.529800]],
+    ['H', [0.000000, 0.937100, -1.109500]],
+    ['H', [0.000000, -0.937100, -1.109500]],
+  ]
+basis: 'sto-3g'
+nelecas: 12
+norbcas: 10     # 20 qubits
+spin: 0
+charge: 0

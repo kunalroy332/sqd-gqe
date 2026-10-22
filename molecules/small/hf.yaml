@@ -1,0 +1,12 @@
+# Hydrogen fluoride. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: linear_chain
+  atoms: ['H', 'F']
+  bond_length: 0.917
+basis: 'sto-3g'
+nelecas: 10     # all 10 electrons active (ncore=0); nelecas=8 left ncore=1,
+                # so ncore+norbcas=7 > nmo=6 in sto-3g -- IndexError on build
+norbcas: 6      # 12 qubits
+spin: 0
+charge: 0

@@ -1,0 +1,25 @@
+# Ethanol C2H5OH — new training-tier ceiling (32 qubits). RHF singlet.
+# 6-31g (not sto-3g like the other medium molecules) because sto-3g only gives
+# 21 MOs here, too few to host a 16-orbital active space with headroom; 6-31g
+# gives 39 MOs. nelecas kept modest (10 of 26 electrons) so CASCI stays near
+# CO2's scale: FCI dim = C(16,5)^2 ~= 1.9e7 (~2x CO2's 28q CASCI), not the
+# ~1.3e8+ you'd get pulling more electrons into the same 16-orbital window.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['C', [0.000000, 0.000000, 0.000000]],
+    ['C', [1.520000, 0.000000, 0.000000]],
+    ['O', [2.100000, 1.230000, 0.000000]],
+    ['H', [-0.510000, 0.880000, 0.370000]],
+    ['H', [-0.510000, -0.880000, 0.370000]],
+    ['H', [-0.510000, 0.000000, -1.030000]],
+    ['H', [1.960000, -0.500000, 0.870000]],
+    ['H', [1.960000, -0.500000, -0.870000]],
+    ['H', [3.030000, 0.980000, 0.000000]],
+  ]
+basis: '6-31g'
+nelecas: 10
+norbcas: 16     # 32 qubits
+spin: 0
+charge: 0

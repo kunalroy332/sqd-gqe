@@ -1,0 +1,18 @@
+# [Fe2S2] core motif — large strongly-correlated cluster from the QC literature.
+# Held-out zero-shot transfer target. NOTE: genuinely open-shell/multireference;
+# RHF here is a placeholder — flagged for UHF/ROHF once that path lands. A large
+# active space (published studies use (30e,20o)-scale). Kept as a stretch target.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['Fe', [ 1.340000, 0.000000, 0.000000]],
+    ['Fe', [-1.340000, 0.000000, 0.000000]],
+    ['S',  [ 0.000000, 1.430000, 0.000000]],
+    ['S',  [ 0.000000, -1.430000, 0.000000]],
+  ]
+basis: 'sto-3g'
+nelecas: 20
+norbcas: 20     # 40 qubits — stretch/transfer target (see note; needs UHF for chemistry)
+spin: 0
+charge: 0

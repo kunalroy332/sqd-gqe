@@ -1,0 +1,14 @@
+# Hydrogen cyanide — linear. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['H', [0.000000, 0.000000, -1.064000]],
+    ['C', [0.000000, 0.000000, 0.000000]],
+    ['N', [0.000000, 0.000000, 1.156000]],
+  ]
+basis: '6-31g'
+nelecas: 10
+norbcas: 11     # 22 qubits
+spin: 0
+charge: 0

@@ -1,0 +1,44 @@
+# Pyridine C5H5N — held-out zero-shot inference target at 40 qubits.
+# RHF singlet, closed-shell. Deliberately NOT used for training.
+#
+# nelecas kept sparse (10 of 42 electrons) so the underlying fixed-particle-
+# number Hilbert space stays tractable for ffsim's STATEVECTOR sampling --
+# not just SQD's diagonalization. A first attempt at (10,10)/20orb gave
+# FCI dim = C(20,10)^2 ~= 3.4e10 and OOM-killed on a quarter-node allocation
+# (~400GB): ffsim has to represent a statevector of that length just to
+# SAMPLE, regardless of max_dim -- the same infeasibility as full FCI, just
+# surfacing in the "fast" simulator instead of the diagonalizer. (5,5)/20orb
+# gives FCI dim = C(20,5)^2 ~= 2.4e8 (~3.8GB statevector), comfortably
+# tractable, while still exercising a genuine 40-qubit circuit + SQD subspace.
+# 6-31g (not sto-3g) for enough MOs: nelectron=42, ncore=(42-10)/2=16, so the
+# active window needs nmo>=36 (sto-3g's 35 MOs don't have quite enough
+# headroom; 6-31g's 64 MOs do).
+#
+# IMPORTANT: do not call casci_energy() on this one -- even at the sparser
+# (5,5) active space the SQD max_dim search can still be swept up toward
+# millions, but a from-scratch exact FCI reference at this scale is not what
+# this repo computes; "error vs exact" here means error vs CCSD(T) / the
+# SQD-self-converged energy (max_dim swept up until it stops moving), the
+# same convergence argument already validated for CO2 at 28q. See
+# benchmark/co2_dim_fix.py and docs/presentation_amortized.tex.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['N', [0.000000, 1.400000, 0.000000]],
+    ['C', [1.200000, 0.720000, 0.000000]],
+    ['C', [1.200000, -0.720000, 0.000000]],
+    ['C', [0.000000, -1.440000, 0.000000]],
+    ['C', [-1.200000, -0.720000, 0.000000]],
+    ['C', [-1.200000, 0.720000, 0.000000]],
+    ['H', [2.150000, 1.260000, 0.000000]],
+    ['H', [2.150000, -1.260000, 0.000000]],
+    ['H', [0.000000, -2.520000, 0.000000]],
+    ['H', [-2.150000, -1.260000, 0.000000]],
+    ['H', [-2.150000, 1.260000, 0.000000]],
+  ]
+basis: '6-31g'
+nelecas: 10
+norbcas: 20     # 40 qubits — inference-only
+spin: 0
+charge: 0

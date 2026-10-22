@@ -1,0 +1,17 @@
+# Methanol CH3OH. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['C', [-0.046500, 0.663400, 0.000000]],
+    ['O', [-0.046500, -0.758200, 0.000000]],
+    ['H', [-1.086800, 0.976600, 0.000000]],
+    ['H', [0.437700, 1.070100, 0.889000]],
+    ['H', [0.437700, 1.070100, -0.889000]],
+    ['H', [0.854500, -1.058600, 0.000000]],
+  ]
+basis: 'sto-3g'
+nelecas: 12
+norbcas: 11     # 22 qubits (STO-3G gives 14 spatial orbs; ncore=3, uses orbs 3..13)
+spin: 0
+charge: 0

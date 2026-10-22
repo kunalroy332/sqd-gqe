@@ -1,0 +1,31 @@
+# Sn(OH)3-Me, active space "M" (19o,24e) from Mitsubishi's MP2-NO-based
+# selection (molecules/large/QC_2026-08-07_calc_MP2-NO-based-AS-Selection-SnOH3Me.pdf,
+# page 2: MO18-36, 1-indexed). See molecules/small/SnOH3-me_S_16o24e_mp2no_def2svp.yaml
+# for the full explanation of from_fcidump()'s geometry/basis role and the
+# ccsd_energy() limitation.
+#
+# FCI dim = C(19,12)^2 ~= 2.5e9 -- exceeds FCI_DIM_LIMIT (5e7), so
+# casci_energy() raises FciIntractableError here; use ccsd_t_energy() or an
+# SQD self-convergence reference instead (same situation as pyridine.yaml).
+_target_: sqd_gqe.core.system.MolecularSystem.from_fcidump
+fcidump_path: molecules/medium/SnOH3-me_M_19o24e_mp2no_def2svp.fcidump
+geometry:
+  type: custom
+  geometry: [
+    ['Sn', [0.02609710, 0.00023297, 0.00000503]],
+    ['O', [-0.72960854, -0.88382672, -1.60694390]],
+    ['O', [-0.73028565, -0.95136505, 1.56746013]],
+    ['O', [-0.73429650, 1.83192239, 0.03919732]],
+    ['C', [2.14616611, 0.00206624, 0.00035189]],
+    ['H', [2.51047407, -0.89030332, 0.52481169]],
+    ['H', [-1.38625841, -0.40089236, 2.01614545]],
+    ['H', [2.50957444, 0.90258618, 0.51113774]],
+    ['H', [2.51025081, -0.00565453, -1.03468371]],
+    ['H', [-1.38487560, -1.54770593, -1.35281127]],
+    ['H', [-1.38749167, 1.94407916, -0.66467107]],
+  ]
+basis: 'def2-svp'
+ecp:
+  Sn: 'def2-svp'
+spin: 0
+charge: 0

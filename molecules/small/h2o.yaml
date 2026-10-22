@@ -1,0 +1,14 @@
+# Water — bent, equilibrium geometry. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: custom
+  geometry: [
+    ['O', [0.000000, 0.000000, 0.117300]],
+    ['H', [0.000000, 0.757200, -0.469200]],
+    ['H', [0.000000, -0.757200, -0.469200]],
+  ]
+basis: 'sto-3g'
+nelecas: 8
+norbcas: 6      # 12 qubits
+spin: 0
+charge: 0

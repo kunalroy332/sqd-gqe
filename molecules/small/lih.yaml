@@ -1,0 +1,11 @@
+# LiH — common small benchmark. RHF singlet.
+_target_: sqd_gqe.core.system.MolecularSystem
+geometry:
+  type: linear_chain
+  atoms: ['Li', 'H']
+  bond_length: 1.60
+basis: 'sto-3g'
+nelecas: 2
+norbcas: 5      # 10 qubits (active space around the bond)
+spin: 0
+charge: 0
