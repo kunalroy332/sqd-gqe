@@ -178,8 +178,8 @@ cython_debug/
 out/
 outputs/
 wandb/
-experiments/
-circuit_analysis*/
-docs/reports/
+/experiments/
+/circuit_analysis*/
+/docs/reports/
 nohup.out
 slurm-*.out
