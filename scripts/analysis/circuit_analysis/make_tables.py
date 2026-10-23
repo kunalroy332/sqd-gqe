@@ -153,7 +153,7 @@ def master_table(d, label, caption):
     def fmt(r):
         t = r["t"]
         return (f"{r['label']} & {lin_name(r['lineage'])[:2]} ({lin_name(r['lineage'])}) & {cell(t['best'])} & {cell(t['second'])} & "
-                f"{cell(t['merged'])} & {err(t['oldbest'])}/{err(t['oldsecond'])} & {t['best']['depth']} & {t['best']['two_q']} & " + " & ".join(div_cells(r)) + " \\\\")
+                f"{cell(t['merged'])} & {err(t['oldbest'])}/{err(t['oldsecond'])} & {t['best']['depth']} & {t['best']['two_q']} \\\\")
     allr = [(run_key(r), "r", r) for r in rows_all_trained(d)]
     miss = [((LABEL[mk][1], LABEL[mk][2], lin), "m", (mk, lin)) for mk, lin in planned_missing(d)] if MISSING_NOTE else []
     out, prev = [], None
@@ -168,13 +168,14 @@ def master_table(d, label, caption):
         if kind == "r":
             out.append(fmt(x))
         else:
-            P = PEND
-            out.append(f"{LABEL[mk][0]} & {lin_name(x[1])[:2]} ({lin_name(x[1])}) & {P} & {P} & {P} & {P}/{P} & {P} & {P} & {P} & {P} & {P} \\\\")
+            # a planned run with no ranking selection: the batch of ten had a single circuit with valid shots, so no best/second pair exists
+            D = "--"
+            out.append(f"{LABEL[mk][0]} & {lin_name(x[1])[:2]} ({lin_name(x[1])}) & \\multicolumn{{4}}{{c}}{{only one circuit with valid shots: no best/second pair}} & {D} & {D} \\\\")
         prev = mk
     body = "\n".join(out)
-    return (f"\\begin{{table}}[ht]\n\\centering\n\\caption{{{caption}}}\n\\label{{{label}}}\n\\scriptsize\n"
-            "\\begin{tabular}{@{}llrrrrrrrrr@{}}\n\\toprule\nMolecule (tier, qubits) & Arch.\\ (lineage) & Best E$_h$/mHa & Second E$_h$/mHa & "
-            "Merged E$_h$/mHa & E+D 1/2 (mHa) & Depth & 2q & $F$ & $H$ & op.\\ norm \\\\\n\\midrule\n" + body + "\n\\bottomrule\n\\end{tabular}\n\\end{table}")
+    return (f"\\begin{{table}}[ht]\n\\centering\n\\caption{{{caption}}}\n\\label{{{label}}}\n\\footnotesize\n\\setlength{{\\tabcolsep}}{{3pt}}\n"
+            "\\begin{tabular}{@{}llrrrrrr@{}}\n\\toprule\nMolecule (tier, qubits) & Arch.\\ (lineage) & Best E$_h$/mHa & Second E$_h$/mHa & "
+            "Merged E$_h$/mHa & E+D 1/2 (mHa) & Depth & 2q \\\\\n\\midrule\n" + body + "\n\\bottomrule\n\\end{tabular}\n\\end{table}")
 
 
 PLANNED = {lin: ["sno32", "h2o_s19", "sno38", "2h2o_s22", "L46", "h2o_m_no23", "llno28", "h2o_l28", "2h2o_m_no29", "h2o_ll33", "2h2o_l35"] for lin in ("a1-46q", "a5-46q", "a1-70q", "a5-70q")}
@@ -210,7 +211,7 @@ def dmrg_table(d, label, caption):
         if not best[4]:
             row = row.replace(f" & {e_s} & ", f" & $\\le${e_s}$^{{\\dagger}}$ & ", 1)
         out.append(row)
-    return (f"\\begin{{table}}[ht]\n\\centering\n\\caption{{{caption}}}\n\\label{{{label}}}\n\\small\n"
+    return (f"\\begin{{table}}[ht]\n\\centering\n\\caption{{{caption}}}\n\\label{{{label}}}\n\\small\n\\setlength{{\\tabcolsep}}{{3pt}}\n"
             "\\begin{tabular}{@{}lrrrll@{}}\n\\toprule\nTarget & DMRG ($\\eh$) & Best SQD ($\\eh$) & Error (mHa) & Lineage & Type \\\\\n"
             "\\midrule\n" + "\n".join(out) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}")
 
@@ -250,7 +251,7 @@ def replace_env(text, label, new_env):
         mm = list(pat.finditer(text))
         if len(mm) == 1:
             env = new_env
-            if kind == "table*":
+            if kind == "table*" or label == "tab:dmrg-vs-sqd":
                 env = env.replace("\\begin{table}", "\\begin{table*}", 1).replace("\\end{table}", "\\end{table*}", 1)
             return text[:mm[0].start()] + env + text[mm[0].end():]
     raise AssertionError(label)
@@ -276,6 +277,8 @@ def main():
         "tab:raw-shot-excitation": raw_table(d, "tab:raw-shot-excitation", CAPTIONS["raw"] + pend_note),
     }
     for lab in new:
+        if lab in ("tab:zeroshot-master", "tab:dmrg-vs-sqd"):
+            continue          # these two are set at a fixed font size (no rescaling), so the text size is the one chosen in the table
         if "resizebox" not in new[lab] and "\\begin{tabular}" in new[lab]:
             new[lab] = new[lab].replace("\\begin{tabular}", "\\resizebox{\\linewidth}{!}{%\n\\begin{tabular}", 1).replace(
                 "\\end{tabular}", "\\end{tabular}}", 1)

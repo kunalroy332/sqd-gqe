@@ -36,8 +36,7 @@ CAPTIONS = {
         r"Zero-shot inference master summary, trained policies only, every lineage$\times$molecule combination. "
         r"Each cell is energy (E$_h$)/error vs.\ DMRG (mHa). Depth/2q are the depth and two-qubit-gate count of the best circuit as transpiled and submitted to "
         r"\code{ibm\_kobe} (live transpilation at Qiskit optimization level 1); the offline estimate on the \code{ibm\_heron\_r2} basis is not used. "
-        r"The last three columns compare the generated circuit with the idealised LUCJ circuit of the same molecule in an exact, noiseless calculation (Section~\ref{sec:divergence}): "
-        r"$F=|\langle\psi_g|\phi\rangle|^2$ is the state fidelity \cite{jozsa1994fidelity,nielsen2010} of the two states obtained from the Hartree--Fock input, $H$ the Hellinger distance \cite{hellinger1909,bhattacharyya1943} between their determinant distributions, and op.\ norm a lower bound of the operator norm $\|U_g-U_{\mathrm{LUCJ}}\|$ (maximum 2) \cite{lanczos1950}, computed only for the 16-orbital tier; n/a: not computable (more than 44 qubits, or SnOH3-me M, 38 qubits, whose determinant space has $2.5\times10^{9}$ elements); -- : not computed for this circuit. "
+        r"The distance of the generated circuits from the idealised LUCJ circuit is in Section~\ref{sec:divergence}. "
         r"Matched untrained controls are in Appendix~\ref{sec:appendix-inference-detail}. " + PROTOCOL
     ),
     "dmrg": (
