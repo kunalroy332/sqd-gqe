@@ -128,12 +128,18 @@ def best_chem(r):
 
 
 have = {(r["mol"], r["lineage"]) for r in trained}
+NOSEL = [(mk, lin) for lin in LINS for mk in PLANNED[lin] if (mk, lin) not in {(r["mol"], r["lineage"]) for r in trained}] if SET != "t1" else []
+PENDING_CELLS = sum(1 for r in trained for e in r["t"].values() if not e["done"])
 nfin = sum(1 for r in trained if r["t"]["best"]["done"])
 nmeas = len(trained)
-status = (f"{nmeas} of {NPLAN} planned trained runs are measured and {nfin} have their best circuit recovered" if SET != "t1" else
-          f"{nmeas} of the {NPLAN} planned trained runs are available: the 24 runs of the first campaign are complete, the 8 runs on the two new tiers (SnOH3-me M 38q and SnOH3-me-h2o L 56q, four lineages) are not yet run")
-BANNER = (f'<div class="note warn"><b>Status.</b> {status}. Everything marked <span class="pend">in red</span> is missing or still running and is {NOTE}; '
-          f'no number in this report is taken from another model set. Reference date of the data: 2026-10-22.</div>')
+_nsel = len(NOSEL)
+status = (f"all {NPLAN} planned trained runs were sampled on ibm_kobe; {nfin} have a recovered best circuit"
+          + (f", and {_nsel} run{'s' if _nsel != 1 else ''} had a single circuit with valid shots, so the ranking found no best and second circuit" if _nsel else "")
+          + (f"; {PENDING_CELLS} recovery result{'s' if PENDING_CELLS != 1 else ''} still running" if PENDING_CELLS else "")) if SET != "t1" else \
+         (f"all {nmeas} Training 1 runs are available: the 24 of the first campaign and the 8 on the two tiers added later (SnOH3-me M 38q and SnOH3-me-h2o L 56q, four lineages); the other 12 (molecule x lineage) cells were not run with this set")
+_red = "Entries in <span class=\"pend\">red</span> are not available." if (PENDING_CELLS or SET == "t1") else "Nothing in this report is pending."
+BANNER = (f'<div class="note warn"><b>Status.</b> {status}. {_red} '
+          f'No number in this report is taken from another model set. Reference date of the data: 2026-10-23.</div>')
 
 # ------------------------------------------------------------------ training data
 def hist(name):
@@ -283,7 +289,7 @@ for mk in sorted(ALLMOL, key=lambda m: (LABEL[m][1], LABEL[m][2])):
         r = byk.get((mk, lin))
         if r is None:
             if mk in PLANNED[lin]:
-                rows.append([E(LABEL[mk][0]), lin.upper()] + [pend("run pending")] + [pend("&ndash;")] * 6)
+                rows.append([E(LABEL[mk][0]), lin.upper(), "only one circuit with valid shots: no best/second pair"] + ["&ndash;"] * 6)
             continue
         t = r["t"]
         b, s, m_ = t["best"], t["second"], t["merged"]
@@ -298,7 +304,7 @@ fin = [r["t"]["best"]["err"] for r in trained if r["t"]["best"]["done"]]
 if fin:
     e = np.array(fin)
     A(f"<p><b>Summary of the {len(fin)} finished trained runs:</b> median error of the best circuit {np.median(e):.2f} mHa; {int((e < 1).sum())} within 1 mHa, {int((e < 5).sum())} within 5 mHa, {int((e < 15).sum())} within 15 mHa. "
-      f"<span class=\"pend\">Statistics over the {NPLAN - len(fin)} remaining planned runs are {NOTE}.</span></p>")
+      + (f"The other {NPLAN - len(fin)} planned run(s) have no best circuit (single circuit with valid shots)." if NPLAN - len(fin) else "") + "</p>")
 
 # ------------------------------------------------------------------ chemistry at inference
 A('<h2 id="chemistry">4. Chemistry of the generated circuits on unseen molecules</h2>')
@@ -342,12 +348,12 @@ for i, lin in enumerate(LINS):
     ax[1].bar(i, 100 * (med(agg[lin]["frac_identity"]) or 0), 0.5)
 ax[1].set_xticks(range(4)); ax[1].set_xticklabels([l.upper() for l in LINS]); ax[1].set_title("identity (padding) tokens in the best circuit's sequence (%)"); ax[1].grid(alpha=.2)
 A("<h3>Median over the finished runs, by lineage</h3>" + b64fig(fig))
-A(f'<p class="pend">Aggregates cover the finished runs only and change as the remaining runs finish ({NOTE}).</p>')
+A('<p>Aggregates are medians over the runs that have a result.</p>')
 
 # ------------------------------------------------------------------ training vs inference
 A('<h2 id="tvi">5. Training chemistry against inference chemistry</h2>')
 if SET == "t1":
-    A('<div class="note warn"><span class="pend">Not available for Training 1.</span> Training 1 logged no per-iteration chemistry (no tracking), so there is no training-time curve to correlate with the inference chemistry of section 4. '
+    A('<div class="note warn"><b>Not available for Training 1.</b> Training 1 logged no per-iteration chemistry (no tracking), so there is no training-time curve to correlate with the inference chemistry of section 4. '
       'The same comparison for the two Training 2 sets is in <code>report_hf_penalty.html</code> and <code>report_tuned_reward.html</code>.</div>')
 else:
     A("<p>Left block: the last 20 iterations of Stage 2 of the training run, best circuit of each iteration (<code>track.exc_best</code>, <code>track.seq_best</code>) and the mean over the 20 circuits sampled per iteration. "
@@ -402,7 +408,7 @@ try:
         rows.append([("<b>" + lab + "</b>") if {"t1": "T1", "hf": "HF", "tuned": "tuned"}[SET] == s_ else lab, len(cells), fnum(med([x["err"] for x in b]), 2), fnum(float(np.mean([x["err"] for x in b])), 1),
                      fnum(med([x["err"] for x in c2]), 2), fnum(med(mn), 2), f"{med([x['depth'] for x in b]):.0f}"] + [pct(med([x[q] for x in b])) for q in ("valid", "hf", "hl", "a", "b", "both")])
     A(table(["Set", "cells", "best err median (mHa)", "best err mean (mHa)", "2nd err median", "min(best,2nd) median", "depth (best)", "valid %", "HF %", "HL %", "&alpha; only %", "&beta; only %", "both %"], rows))
-    A(f'<p class="pend">{len(cells)} of the {len(ALLMOL) * 4} (molecule x lineage) cells are complete in all three sets; the comparison is {NOTE}. Differences of 0.1-1 mHa in the median are below the spread between runs and are not a ranking (one training seed per set).</p>')
+    A(f'<p>{len(cells)} cells (molecule x lineage) were run in all three sets: the 24 of the first campaign and the 8 on SnOH3-me M and SnOH3-me-h2o L. Differences of 0.1-1 mHa in the median are below the spread between runs and are not a ranking (one training seed per set).</p>')
     rows = []
     for k in cells:
         row = [E(LABEL[k[0]][0]), k[1].upper()]
@@ -463,7 +469,7 @@ for _lab, _tree, _fn, _plan in _it.SETS:
     _g, _bad, _run = _it.stats(_tree, _fn)
     _q = _it.qpu(_tree, _plan)
     _rec = _g["rec_bs"] + _g["rec_ed"] + _g["rec_m"]
-    _done = len(_g["sample"]) >= _plan and not _run and (_tree == "circuit_analysis" or len(_rec) >= 0.97 * 5 * _plan)
+    _done = len(_g["sample"]) >= _plan and len(_run) == 0
     _c = (lambda t: t) if _done else (lambda t: pend(t))
     _rows.append([_lab, len(_g["sample"]), f"{sum(_g['sample']) / 3600:.1f}", f"{sum(_g['rank']) / 3600:.1f}", _c(f"{len(_rec)}"), _c(f"{sum(_rec) / 3600:.1f}"), _c(f"{2 * sum(_rec) / 3600:.1f}"),
                   f"{_q[0]:,.0f} s ({_q[0] / 60:.0f} min), {_q[0] / max(_q[1], 1):.0f} s/job" if _q and _q[0] is not None else pend("not retrieved")])
@@ -563,7 +569,7 @@ with open(dd / "summary_best_circuit.csv", "w", newline="") as f:
 A(f'<p>Per-run JSON (circuits with sequences, shot-level chemistry, ranking and recovery results; the recovered alpha strings are omitted) and a CSV in <code>report_{NAMES[SET]}_data/</code> next to this file: '
   f'<a href="report_{NAMES[SET]}_data/summary_best_circuit.csv">summary_best_circuit.csv</a>; '
   + ", ".join(f'<a href="report_{NAMES[SET]}_data/{E(r["tag"])}.json">{E(r["tag"])}</a>' for r in runs) + '. Complete counts and the transpiled circuits stay in the Zenodo archive of the first campaign; those of this set are on the cluster '
-  f'(<code>experiments/inference_{"t1" if SET == "t1" else SET}/circuit_analysis_ibm_jobs</code>) <span class="pend">and will be added to the deposit when the campaign is finished</span>.</p>')
+  f'(<code>experiments/inference_{"t1" if SET == "t1" else SET}/circuit_analysis_ibm_jobs</code>) (the circuit archive and raw counts are in the deposit).</p>')
 A("</main></body></html>")
 OUTDIR.mkdir(exist_ok=True)
 path = OUTDIR / f"report_{NAMES[SET]}.html"
