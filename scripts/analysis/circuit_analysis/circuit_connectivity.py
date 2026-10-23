@@ -29,7 +29,7 @@ import sys
 
 from qiskit import qpy, transpile
 
-BASE = "/path/to/sqd-gqe-work/experiments/crossnorb70q_infer"
+BASE = os.environ.get("INFER_ROOT", "/path/to/sqd-gqe-work/experiments/crossnorb70q_infer")   # each model set has its own tree
 
 
 def graph_metrics(n_total, pairs, touched_any):
