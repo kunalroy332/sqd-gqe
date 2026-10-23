@@ -15,6 +15,7 @@
 Usage (needs IBM_API_KEY and IBM_CRN in your shell; nothing secret is printed or written):
     python3 fetch_qpu_inference_sets.py hf       # circuit_analysis_hf/data/*.json      -> circuit_analysis_hf/qpu_fresh.json
     python3 fetch_qpu_inference_sets.py tuned    # circuit_analysis_tuned/data/*.json   -> circuit_analysis_tuned/qpu_fresh.json
+    python3 fetch_qpu_inference_sets.py t1       # circuit_analysis/data/*.json         -> circuit_analysis/qpu_fresh.json
     python3 fetch_qpu_inference_sets.py --diagnose   # list the instances / recent jobs the account can see
 The Runtime job ids are read from the per-run files; the billed time is job.usage() (quantum_seconds), falling back to the job metrics
 (usage.quantum_seconds / qpu_charge_time_seconds). Jobs IBM cannot return are listed under "missing", never guessed.
@@ -24,7 +25,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
-DIRS = {"hf": REPO / "circuit_analysis_hf", "tuned": REPO / "circuit_analysis_tuned"}
+DIRS = {"hf": REPO / "circuit_analysis_hf", "tuned": REPO / "circuit_analysis_tuned", "t1": REPO / "circuit_analysis"}
 
 
 def billed(service, jid):
