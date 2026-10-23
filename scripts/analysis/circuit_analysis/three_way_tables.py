@@ -23,7 +23,7 @@ NAME = {"sno32": "S 32q", "sno38": "M 38q", "L46": "L 46q", "llno28": "LL 56q", 
 ORDER = ["sno32", "h2o_s19", "sno38", "2h2o_s22", "L46", "h2o_m_no23", "llno28", "h2o_l28", "2h2o_m_no29", "h2o_ll33", "2h2o_l35"]
 SETS = [("T1", "Training 1"), ("HF", "HF penalty"), ("tuned", "tuned")]
 cells = sorted([k for k, v in R.items() if {"T1", "HF", "tuned"} <= set(v)], key=lambda k: (ORDER.index(k[0]), k[1]))
-RED = lambda s: "{\\color{red}" + s + "}"
+RED = lambda s: s   # all three sets are finished for the compared cells; nothing is pending
 f = lambda x, p=1: "--" if x is None else f"{x:.{p}f}"
 pc = lambda x: "--" if x is None else f"{100 * x:.1f}"
 med = lambda xs: float(np.median([x for x in xs if x is not None])) if any(x is not None for x in xs) else None
@@ -31,7 +31,7 @@ med = lambda xs: float(np.median([x for x in xs if x is not None])) if any(x is 
 
 def main_block():
     L = ["% BEGIN THREEWAY", "\\begin{table*}[t]", "\\centering",
-         "\\caption{The three model sets on the cells in which all three have the best and second circuit recovered. Medians over cells, by lineage (last block: all cells): error of the best circuit, of the second circuit and of the better of the two, against DMRG (mHa); as-submitted depth of the best circuit; and the shot composition of the best circuit in percent: share of all shots in the right spin sector (valid), Hartree--Fock determinant share and HOMO$\\to$LUMO share of the valid shots, and the alpha-only, beta-only and both-spin shares of the valid shots. Red: depends on a campaign still running when the table was made.}",
+         "\\caption{The three model sets on the cells in which all three have the best and second circuit recovered. Medians over cells, by lineage (last block: all cells): error of the best circuit, of the second circuit and of the better of the two, against DMRG (mHa); as-submitted depth of the best circuit; and the shot composition of the best circuit in percent: share of all shots in the right spin sector (valid), Hartree--Fock determinant share and HOMO$\\to$LUMO share of the valid shots, and the alpha-only, beta-only and both-spin shares of the valid shots. }",
          "\\label{tab:three-way}", "\\scriptsize", "\\setlength{\\tabcolsep}{3pt}",
          "\\begin{tabular}{@{}llrrrrrrrrrrr@{}}", "\\toprule",
          "Lineage & Model set & cells & best err & 2nd err & min(best,2nd) & depth & valid & HF & HL & $\\alpha$ only & $\\beta$ only & both \\\\", "\\midrule"]
