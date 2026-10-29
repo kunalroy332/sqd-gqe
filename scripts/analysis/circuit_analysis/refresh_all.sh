@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+# This code is a Qiskit project.
+#
+# (C) Copyright IBM 2026.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
 # One command to refresh every inference-derived number, table and report from the cluster. Run from anywhere.
 #   scripts/analysis/circuit_analysis/refresh_all.sh
 # It does NOT need your IBM key. The QPU files (qpu_fresh.json) are made separately with fetch_qpu_inference_sets.py <hf|tuned>; rerun that
