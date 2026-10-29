@@ -38,7 +38,7 @@ The notebooks in [`tutorial/`](tutorial) walk through training and inference on 
 | `benchmark/` | Amortized multi-molecule trainer and analysis tools |
 | `scripts/analysis/` | Inference and circuit-analysis pipeline |
 | `slurm/`, `apptainer.def` | Cluster job templates and container definition |
-| `test/`, `tests/` | Unit tests |
+| `tests/` | Unit tests |
 
 ## Contributing and license
 

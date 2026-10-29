@@ -46,10 +46,6 @@ dev = [
     "pre-commit",
 ]
 
-[project.urls]
-Homepage = "https://github.ibm.com/ibm-q-research/sqd-gqe"
-BugTracker = "https://github.ibm.com/ibm-q-research/sqd-gqe/issues"
-
 [tool.hatch.build.targets.wheel]
 packages = ["sqd_gqe"]
 
@@ -57,7 +53,7 @@ packages = ["sqd_gqe"]
 allow-direct-references = true
 
 [tool.pytest.ini_options]
-testpaths = ["test", "tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
