@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# This code is a Qiskit project.
-#
 # (C) Copyright IBM 2026.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
@@ -21,9 +19,7 @@ import argparse
 import sys
 from pathlib import Path
 
-HEADER = """# This code is a Qiskit project.
-#
-# (C) Copyright IBM 2026.
+HEADER = """# (C) Copyright IBM 2026.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE file in the root directory
