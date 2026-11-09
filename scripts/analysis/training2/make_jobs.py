@@ -52,7 +52,6 @@ HEAD = f"""#!/usr/bin/env bash
 #SBATCH -n 1
 #SBATCH -c 8
 #SBATCH --time={{time}}
-#SBATCH --exclude=qr01n08,qr02n11,qr04n16
 #SBATCH -o {EXP}/logs/{{name}}.out
 #SBATCH -e {EXP}/logs/{{name}}.err
 module load cuda/13.2 nvhpc/26.5 hpcx/2.50

@@ -41,7 +41,6 @@ def head(name, gpus, tasks, cpus, hours):
 #SBATCH -N 1
 #SBATCH -c {cpus}
 #SBATCH --time={hours}:00:00
-#SBATCH --exclude=qr01n08,qr02n11,qr04n16
 #SBATCH -o {R}/experiments/inference_logs/{name}.out
 #SBATCH -e {R}/experiments/inference_logs/{name}.err
 """

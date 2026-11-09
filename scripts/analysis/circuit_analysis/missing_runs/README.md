@@ -24,8 +24,7 @@ to `TAGS` in the submit script only if the 46q lineage is wanted too; it needs a
 3. `fin_<tag>` (after `rr_` succeeds): `select_new.py` picks best, second, merged and the two E+D circuits, writes the five recovery job files and submits them
    (2 GPUs, 36 h each, no deadline). `rerecover_target.py` runs the 25-iteration recovery for each.
 
-Everything else (bad-node exclusion `--exclude=qr01n08,qr02n11,qr04n16`) comes from the same generators as the other 29 runs. The three nodes had broken GPU stacks before the maintenance;
-re-check with a short test job before trusting them, and edit the `--exclude` line in `make_sbatch.py`, `make_rerank_sbatch.py` and `select_new.py` if they were repaired.
+Everything else comes from the same generators as the other 29 runs. Three nodes of the original cluster had broken GPU stacks; if a node of your cluster misbehaves, add an `--exclude=<node list>` line to the generated job headers.
 
 ## Run it
 

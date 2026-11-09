@@ -22,7 +22,6 @@ TEMPLATE = """#!/usr/bin/env bash
 #SBATCH -c 16
 #SBATCH --time=3:00:00
 #SBATCH --time-min=0:40:00
-#SBATCH --exclude=qr01n08,qr02n11,qr04n16
 #SBATCH -o /path/to/sqd-gqe-work/experiments/production_final/logs/rr_{tag}.out
 #SBATCH -e /path/to/sqd-gqe-work/experiments/production_final/logs/rr_{tag}.err
 
