@@ -164,13 +164,15 @@ def cost_adjusted_energies(
     # ffsim simulation (particle number is exact by construction) but common
     # with noisy/approximate sampling (IbmHardwareSampler's real or MPS-
     # approximated hardware counts). An inf anywhere in the batch poisons
-    # GroupRelativeObjective.advantage (mean()/std() both become inf/nan,
+    # the group-relative advantage (mean()/std() both become inf/nan,
     # producing nan gradients for every sample, not just the degenerate one)
     # -- clip to a large-but-finite penalty instead, so the policy still gets
     # a strong "this was bad" signal without destroying the whole batch's
     # training step.
     chem_acc_loose = chem_acc if chem_acc_loose is None else chem_acc_loose
     finite = [e for e in energies if math.isfinite(e)]
+    # Best finite + 10 Ha. GroupRelativeObjective uses worst finite + 10 Ha for training;
+    # the two are separate on purpose and both rank a failure last.
     penalty_e = (min(finite) if finite else ref_energy) + 10.0  # +10 Ha, far outside any real chem-acc window
     adjusted = []
     for i, (e, seq) in enumerate(zip(energies, seqs)):

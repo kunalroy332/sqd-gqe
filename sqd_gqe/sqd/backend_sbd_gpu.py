@@ -58,6 +58,7 @@ per a real recorded run).
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -214,6 +215,12 @@ class SbdGpuDiagonalizer:
         solver_kwargs = {**self.solver_kwargs, **(solver_overrides or {})}
         args = sbd_io.build_solver_args(solver_kwargs)
         cmd = self.launcher + [self.binary_path] + args
+        # Keep the SDK's CUDA libraries scoped to SBD, away from Python's GPU wheels.
+        env = None
+        if native_libs := os.environ.get("SBD_LD_LIBRARY_PATH"):
+            env = os.environ.copy()
+            env["LD_LIBRARY_PATH"] = os.pathsep.join(
+                filter(None, (native_libs, env.get("LD_LIBRARY_PATH"))))
         # Retry on a subprocess timeout: confirmed on real 38q multi-GPU runs that
         # this is an intermittent single-call hang (178/179 calls at the identical
         # 1000-det/1e6-net-dim config completed in ~12s; one call hung the full
@@ -227,6 +234,7 @@ class SbdGpuDiagonalizer:
             try:
                 result = subprocess.run(
                     cmd, cwd=str(work_dir), timeout=self.timeout_s, capture_output=True, text=True,
+                    env=env,
                 )
                 break
             except subprocess.TimeoutExpired:

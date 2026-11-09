@@ -38,6 +38,65 @@ import torch
 from sqd_gqe.gqe.operator_pool import FfsimBasedPool
 
 
+def select_top_k(xp, w, k: int):
+    """Indices of the ``k`` largest weights, breaking cutoff ties by lower index."""
+    size = int(w.size)
+    k = min(int(k), size)
+    if k == size:
+        return xp.arange(size)
+    sel = xp.argpartition(w, -k)[-k:]
+    threshold = w[sel].min()
+    strict = xp.flatnonzero(w > threshold)          # at most k-1 of them
+    need = k - int(strict.size)
+    if need <= 0:
+        return strict[:k]
+    tied = xp.flatnonzero(w == threshold)           # ascending, so lowest index wins
+    return xp.concatenate([strict, tied[:need]])
+
+
+# Drop zero/numerical-noise weights instead of padding the SQD subspace.
+MIN_TOP_K_WEIGHT = 1e-12
+
+
+def pseudo_counts(prob, shots: int):
+    """Weights rescaled to ``shots`` integer counts, at least 1 each -- what sampling
+    would converge to with infinite statistics. Shared by the top-k samplers."""
+    return np.maximum(1, np.rint(prob / prob.sum() * shots)).astype(np.int64)
+
+
+def resolve_min_prob(min_prob, shots: int) -> float | None:
+    """The top-k floor as a probability: ``"auto"`` is ``1 / shots`` (an expected count of
+    one), a number is taken as is, and None turns the floor off."""
+    if min_prob is None:
+        return None
+    if min_prob == "auto":
+        return 1.0 / float(shots)
+    value = float(min_prob)
+    if not value >= 0.0:
+        raise ValueError(f"min_prob must be 'auto', None or a probability >= 0, not {min_prob!r}")
+    return value
+
+
+def floor_and_count(prob, shots: int, min_prob: float | None):
+    """Apply the top-k floor to probabilities of a normalised state.
+
+    Returns ``(keep, counts)``: a mask over ``prob`` and the counts of the kept entries.
+    A top-k selection would otherwise hand a determinant a count even when a run of
+    ``shots`` would almost never draw it, and a trained policy learns to spread its state
+    that thin: fine for the reward at 32q, a collapse at 46q (docs/mps.md). With a floor the
+    counts are what ``shots`` would give, ``prob * shots``, not renormalised. If nothing
+    clears the floor only the largest is kept: a state no run could sample earns a
+    one-determinant subspace, which is the right verdict.
+    """
+    prob = np.asarray(prob)
+    if min_prob is None:
+        return np.ones(prob.shape, dtype=bool), pseudo_counts(prob, shots)
+    keep = prob >= min_prob
+    if not keep.any():
+        keep = prob == prob.max()
+    return keep, np.maximum(1, np.rint(prob[keep] * shots)).astype(np.int64)
+
+
 class FfsimSampler:
     def __init__(
         self,
@@ -78,12 +137,15 @@ class FfsimSampler:
         return vec
 
     # -- sampling ------------------------------------------------------------ #
-    def sample_state(self, seq: Sequence[int]) -> dict[tuple[int, int], int]:
+    def _draw_seed(self) -> int:
+        """One int64 seed per circuit, so runs are reproducible."""
+        return int(self._rng.integers(0, 2**63 - 1))
+
+    def sample_state(self, seq: Sequence[int], seed: int | None = None) -> dict[tuple[int, int], int]:
         import ffsim
 
         vec = self.prepare_state(seq)
-        # Draw an int64-per-sample seed from our RNG so runs are reproducible.
-        shot_seed = int(self._rng.integers(0, 2**63 - 1))
+        shot_seed = self._draw_seed() if seed is None else int(seed)
         samples = ffsim.sample_state_vector(
             vec,
             norb=self.norb,
@@ -128,3 +190,46 @@ class FfsimSampler:
         # circuit object), so last_two_qubit_gates stays empty rather than faked.
         self.last_depths = [len(row) for row in idx_output]
         return [self.sample_state(row) for row in idx_output]
+
+
+class ExactTopKSampler(FfsimSampler):
+    """Select the largest nonzero exact-state amplitudes without drawing shots.
+
+    ``min_prob`` drops determinants a run of ``shots_count`` would not draw: ``"auto"``
+    (the default) is ``1 / shots_count``, a number sets the floor, None turns it off
+    (see ``floor_and_count``). See docs/mps.md for usage and the shot-noise comparison.
+    """
+
+    def __init__(self, operator_pool, shots_count: int, top_k: int, seed: int | None = 0,
+                 rayon_threads: int | None = None, min_prob: float | str | None = "auto"):
+        super().__init__(operator_pool, shots_count, seed=seed, rayon_threads=rayon_threads)
+        self.top_k = int(top_k)
+        self.min_prob = resolve_min_prob(min_prob, self.shots_count)
+        self._strings = None
+
+    def _string_tables(self):
+        if self._strings is None:
+            import ffsim
+            dim_a, dim_b = ffsim.dims(self.norb, self.nelec)
+            self._strings = (
+                np.asarray(ffsim.addresses_to_strings(np.arange(dim_a), self.norb, self.nelec[0]),
+                           dtype=np.uint64),
+                np.asarray(ffsim.addresses_to_strings(np.arange(dim_b), self.norb, self.nelec[1]),
+                           dtype=np.uint64),
+                dim_b,
+            )
+        return self._strings
+
+    def sample_state(self, seq: Sequence[int], seed: int | None = None) -> dict[tuple[int, int], int]:
+        vec = self.prepare_state(seq)
+        a_str, b_str, dim_b = self._string_tables()
+        w = np.abs(np.asarray(vec).reshape(-1)) ** 2
+        idx = select_top_k(np, w, self.top_k)
+        idx = idx[w[idx] > MIN_TOP_K_WEIGHT * w.sum()]
+        # Largest weight first. Rounding can give two determinants the same count, and
+        # the stable sort downstream then keeps this order, so it has to be by weight.
+        idx = idx[np.argsort(-w[idx], kind="stable")]
+        keep, pseudo = floor_and_count(w[idx] / w.sum(), self.shots_count, self.min_prob)
+        idx = idx[keep]
+        ia, ib = np.divmod(idx, dim_b)
+        return {(int(a_str[i]), int(b_str[j])): int(c) for i, j, c in zip(ia, ib, pseudo)}

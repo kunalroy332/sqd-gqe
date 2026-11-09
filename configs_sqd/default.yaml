@@ -18,14 +18,34 @@ reference_keys: ["R-CASCI", "R-CCSD"]
 
 sampler:
   shots: 100_000
-  rayon_threads: null
-  depth_noise: null      # [d0, tau, p_max]: extra per-bit flip prob p_max*(1-exp(-(depth-d0)/tau)) from the transpiled depth (needs a *_noisy_sim backend)
+  rayon_threads: null  # ffsim Rust thread count; null -> ffsim default
+  p_readout: 0.0   # readout bit-flip prob; >0 uses the noisy sampler
   p_readout_beta: null   # separate beta-register flip prob (null: same as p_readout)
-  p_readout: 0.0   # readout bit-flip prob; >0 uses the noisy sampler   # ffsim Rust thread count; null -> ffsim default
+  depth_noise: null      # [d0, tau, p_max]: extra per-bit flip prob p_max*(1-exp(-(depth-d0)/tau)) from the transpiled depth (needs a *_noisy_sim backend)
   amplitude_damping: false   # T1-decay-derived directional (1->0) flip prob, scaled by real
                               # 2q-gate count; only active with a *_noisy_sim backend
-  kind: "ffsim"          # "ffsim" (default, existing behavior) | "ibm_hardware" (real/fake
-                         # IBM Quantum sampling via IbmHardwareSampler, one Runtime job per batch)
+  noise_optimization_level: 3  # transpiler level the noise model uses to count 2q gates.
+                         # importing sqd_gqe sets RUST_MIN_STACK, which keeps level 3 working
+                         # on aarch64 (ROQUO), where it used to segfault.
+                         # Level 1 routes to ~1.5-2x the 2q gates, so the noise differs.
+  top_k: null            # topk/mps_topk: null -> effective max_dim (predicted if dynamic_resources)
+  min_prob: auto         # topk/mps_topk: drop determinants below this |c|^2. auto -> 1/shots
+                         # (expected count of one), a number sets it, null keeps them all.
+                         # Without it a policy learns states too thin for any run to sample.
+  mps_max_bond: 256      # SVD bond limit; usage and accuracy/cost measurements: docs/mps.md
+  mps_beam_width: null   # mps_topk: retained prefixes, null -> 4*top_k; logs exactness certificate
+  mps_abs_cutoff: 1e-5   # additional singular-value cutoffs
+  mps_rel_cutoff: 1e-5
+  mps_dtype: "complex64" # "complex64" | "complex128"
+  mps_route: false       # transpile onto a nearest-neighbour chain
+  mps_gauge_option: simple  # "simple": simple-update gauges, so cutoffs drop true Schmidt
+                         # weight | null: cuQuantum's "free", much less accurate per chi
+                         # (docs/mps.md). With "simple", complex64 and 1e-5 cutoffs match
+                         # complex128 at 28q and run 3-5x faster at 38q.
+  mps_canonical_center: null  # site the final MPS is canonicalized around; null: none
+  mps_max_gates: null    # skip over-budget circuits (+inf); measured tradeoff: docs/mps.md
+  kind: "ffsim"          # ffsim | topk | mps | mps_topk | ibm_hardware
+                         # mps_topk requires sqd.enlarge_method=None and sqd.recover_iterations=0
   ibm_backend_name: null  # required when kind="ibm_hardware", e.g. "ibm_kingston"
   ibm_channel: null       # defaults to "ibm_quantum_platform" if unset
   ibm_instance: null      # defaults to $IBM_CRN env var if unset -- never hardcode a CRN here

@@ -17,3 +17,15 @@ statevector simulation) and the subspace is diagonalized with qiskit-addon-sqd;
 the policy is trained by a group-relative policy-gradient objective on the SQD
 subspace energy. The package is fully self-contained.
 """
+
+import os as _os
+
+# qiskit runs transpiler passes such as CommutativeCancellation on Rust threads, whose
+# default stack is 2 MB. On ROQUO's aarch64 nodes that overflows at optimization_level
+# 2 and 3 and the process dies with SIGSEGV, from 32q up (ROQUO job 169486). A larger
+# stack is the only fix among the ones tried: one Rayon thread, QISKIT_PARALLEL=FALSE and
+# three OpenBLAS settings all still crash. Rust reads this once, when it spawns its first
+# thread, so it has to be set before qiskit does any work. That is why it lives here and
+# not at the noise model's level-3 transpile: an earlier qiskit call (an MPS or IBM
+# transpile, a circuit-depth metric) would already have started the threads.
+_os.environ.setdefault("RUST_MIN_STACK", str(64 << 20))

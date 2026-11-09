@@ -68,18 +68,41 @@ import numpy as np
 from sqd_gqe.gqe.sampler import FfsimSampler
 
 
-class NoisyFfsimSampler(FfsimSampler):
-    def __init__(self, operator_pool, shots_count, p_readout: float = 0.01,
-                 seed: int | None = 0, rayon_threads: int | None = None, backend=None,
-                 amplitude_damping: bool = False, p_readout_beta: float | None = None,
-                 depth_noise: tuple | None = None):
-        super().__init__(operator_pool, shots_count, seed=seed, rayon_threads=rayon_threads)
+class MeasurementNoiseMixin:
+    """The per-bit noise transform, independent of which engine produced the shots.
+
+    None of this touches the state: the clean counts come from whatever
+    ``sample_state`` this is mixed in front of, and the noise is a per-shot bit
+    transform on the sampled bitstrings. That is why the same code serves the CPU
+    (ffsim) and GPU (MPS) paths -- mix it in *before* the sampler it wraps, so
+    ``super().sample_state`` reaches that sampler's own implementation.
+    """
+
+    def _init_noise(self, p_readout: float, backend, amplitude_damping: bool, seed,
+                    optimization_level: int = 3, p_readout_beta: float | None = None,
+                    depth_noise: tuple | None = None):
+        if not 1 <= self.norb <= 64:
+            raise ValueError("Measurement noise supports 1 to 64 spatial orbitals "
+                             "using a uint64 mask per spin")
         self.p_readout = float(p_readout)
         # optional separate flip probability for the beta register (None: same as alpha). Real devices put the two registers on
         # different qubits, and the Training-2 hardware runs show a strong alpha/beta asymmetry that symmetric flips cannot produce.
         self.p_readout_beta = self.p_readout if p_readout_beta is None else float(p_readout_beta)
         self.backend = backend
         self.amplitude_damping = bool(amplitude_damping)
+        # Transpiler effort for the 2q-gate count the gate/T1 terms are scaled by.
+        # 3 is circuit_depth_on_backend's own default and what every noisy result so
+        # far was measured with, so it stays the default here. Two reasons to lower it:
+        #   * on aarch64 it SEGFAULTS, reproduced from 28q up on a ROQUO compute node;
+        #     the same call at the same size runs fine on x86. This is the same hazard
+        #     IbmHardwareSampler already pins optimization_level=1 for, and a segfault is
+        #     not catchable by the `except Exception` below.
+        #   * it is not cheap and it runs once per circuit per sample. 1.09 s at 16q.
+        # It is not a free swap: the level changes the routed gate count roughly 2x
+        # (measured at 28q on x86: 319 two-qubit gates at level 1 against 161 at level 3),
+        # so it moves p_gate and p_decay with it. hw.cost's own docstring recommends 0-1
+        # for repeated diagnostic calls, which is what this is.
+        self.noise_optimization_level = int(optimization_level)
         # depth_noise = (d0, tau, p_max): per-bit flip probability p_max * (1 - exp(-max(depth - d0, 0) / tau)) from the circuit's transpiled depth on
         # `backend`, on top of p_readout. Calibrated on 3000 ibm_kobe circuits (23 orbitals): depth 45-60 -> 0.017, 60-100 -> 0.07, >= 300 -> ~0.4-0.5.
         self.depth_noise = None if depth_noise is None else tuple(float(x) for x in depth_noise)
@@ -90,8 +113,9 @@ class NoisyFfsimSampler(FfsimSampler):
             return {}
         from sqd_gqe.gqe import circuit_metrics as cm
         try:
-            # optimisation level 1, as in the trainer's own transpile calls (level 3 segfaults in the aarch64 qiskit build on roquo)
-            return dict(cm.circuit_depth_on_backend(self.pool, seq, self.backend, optimization_level=1))
+            return dict(cm.circuit_depth_on_backend(
+                self.pool, seq, self.backend,
+                optimization_level=self.noise_optimization_level))
         except Exception:
             return {}
 
@@ -112,10 +136,15 @@ class NoisyFfsimSampler(FfsimSampler):
             return 0.0
         return self.backend.amplitude_damping_p(n_2q)
 
-    def sample_state(self, seq) -> dict[tuple[int, int], int]:
+    def sample_state(self, seq, seed: int | None = None) -> dict[tuple[int, int], int]:
         # ideal counts first, then apply per-bit flips (readout + gate-noise
         # proxy, both symmetric), then directional amplitude-damping decay.
-        clean = super().sample_state(seq)
+        clean = super().sample_state(seq, seed=seed)
+        if not clean:
+            return clean
+        # with an explicit per-circuit seed the noise stream is derived from it, so
+        # worker processes do not each replay one shared noise sequence
+        rng = self._noise_rng if seed is None else np.random.default_rng(int(seed) + 20260717)
         m = self._circ_metrics(seq)  # single transpile, shared by all backend-derived terms
         n_2q = int(m.get("two_qubit_gates", 0))
         p_gate = 0.0 if self.depth_noise is not None else self._gate_noise_p(n_2q)
@@ -125,29 +154,34 @@ class NoisyFfsimSampler(FfsimSampler):
         if self.depth_noise is not None:
             d0, tau, pmax = self.depth_noise
             p_dep = pmax * (1.0 - np.exp(-max(float(m.get("depth", 0)) - d0, 0.0) / tau))
-        p_read = np.maximum(np.where(np.arange(n) < norb, self.p_readout, self.p_readout_beta), p_dep)       # bits 0..norb-1 alpha, norb..2norb-1 beta
+        # per-bit readout probability: bits 0..norb-1 are the alpha register, norb..2norb-1 the beta register
+        p_read = np.maximum(np.where(np.arange(n) < norb, self.p_readout, self.p_readout_beta), p_dep)
         p_symmetric = p_read + p_gate - p_read * p_gate  # independent-flip union, per bit
         p_decay = self._amplitude_damping_p(n_2q)
         if float(p_symmetric.max()) <= 0 and p_decay <= 0:
             return clean
-        # expand to a per-shot integer array, flip bits vectorized
-        words = np.array(
-            [((int(b) << norb) | int(a)) for (a, b), c in clean.items() for _ in range(int(c))],
-            dtype=np.int64,
-        )
-        if words.size == 0:
-            return {}
-        bits = ((words[:, None] >> np.arange(n)[None, :]) & 1).astype(np.int8)  # (S, n)
+        # Keep the two spin masks separate: their combined word may exceed 64 bits.
+        pairs = np.repeat(np.asarray(list(clean), dtype=np.uint64), list(clean.values()), axis=0)
+        shifts = np.arange(norb, dtype=np.uint64)
+        bits = ((pairs[:, :, None] >> shifts) & 1).reshape(-1, n).astype(np.int8)
         if float(p_symmetric.max()) > 0:
-            flips = self._noise_rng.random(bits.shape) < p_symmetric[None, :]
+            flips = rng.random(bits.shape) < p_symmetric[None, :]
             bits ^= flips.astype(np.int8)
         if p_decay > 0:
             # directional: only bits currently 1 can decay to 0; 0 never becomes 1.
-            decay = (bits == 1) & (self._noise_rng.random(bits.shape) < p_decay)
+            decay = (bits == 1) & (rng.random(bits.shape) < p_decay)
             bits[decay] = 0
-        noisy = (bits.astype(np.int64) << np.arange(n)[None, :]).sum(axis=1)
-        mask = (1 << norb) - 1
-        alpha = (noisy & mask).tolist()
-        beta = (noisy >> norb).tolist()
-        counts: Counter = Counter(zip(alpha, beta))
+        noisy = (bits.reshape(-1, 2, norb).astype(np.uint64) << shifts).sum(
+            axis=2, dtype=np.uint64)
+        counts: Counter = Counter(map(tuple, noisy.tolist()))
         return dict(counts)
+
+
+class NoisyFfsimSampler(MeasurementNoiseMixin, FfsimSampler):
+    def __init__(self, operator_pool, shots_count, p_readout: float = 0.01,
+                 seed: int | None = 0, rayon_threads: int | None = None, backend=None,
+                 amplitude_damping: bool = False, noise_optimization_level: int = 3,
+                 p_readout_beta: float | None = None, depth_noise: tuple | None = None):
+        super().__init__(operator_pool, shots_count, seed=seed, rayon_threads=rayon_threads)
+        self._init_noise(p_readout, backend, amplitude_damping, seed, noise_optimization_level,
+                         p_readout_beta=p_readout_beta, depth_noise=depth_noise)

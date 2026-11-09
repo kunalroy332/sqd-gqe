@@ -102,18 +102,40 @@ class SqdFactory:
         self.operator_pool = pool
         return pool
 
-    def build_pipeline(self, cfg, backend=None):
-        """``backend`` (a HardwareBackend) is only required when
-        cfg.dynamic_resources is true -- it's part of the ResourceHead's
-        conditioning descriptor. Ignored otherwise."""
-        system = self.build_system(cfg)
+    def build_sampler(self, cfg, backend=None, shots: int | None = None,
+                      max_dim: int | None = None):
+        """The sampler for this config. ``shots`` and ``max_dim`` override cfg.sampler.shots
+        and cfg.sqd.max_dim (build_pipeline may predict them). ``max_dim`` is the top-k
+        kinds' K unless sampler.top_k is set."""
         pool = self.build_operator_pool(cfg)
-
-        max_dim, shots = cfg.sqd.max_dim, cfg.sampler.shots
-        if bool(cfg.get("dynamic_resources", False)):
-            max_dim, shots = self._predict_resources(cfg, system, backend)
-
+        shots = int(cfg.sampler.shots if shots is None else shots)
         sampler_kind = cfg.sampler.get("kind", "ffsim")
+        if sampler_kind in ("topk", "mps_topk"):
+            if max_dim is None:
+                max_dim = cfg.sqd.max_dim
+            top_k = cfg.sampler.get("top_k", None) or max_dim
+        # Device noise applies to every shot-drawing kind (ffsim, mps) by one rule: an
+        # explicit p_readout, or a *_noisy_sim backend for the gate and T1 terms.
+        p_readout = float(cfg.sampler.get("p_readout", 0.0) or 0.0)
+        is_noisy_sim = backend is not None and getattr(backend, "sim_kind", None) == "noisy_sim"
+        noisy = (p_readout > 0 or float(cfg.sampler.get("p_readout_beta", None) or 0) > 0
+                 or is_noisy_sim)
+        # amplitude_damping needs backend.t1_us/gate_time_2q_ns, which only a *_noisy_sim
+        # backend carries, so the flag is ignored without one.
+        noise_kw = dict(
+            p_readout=p_readout,
+            backend=backend if is_noisy_sim else None,
+            amplitude_damping=bool(cfg.sampler.get("amplitude_damping", False)) and is_noisy_sim,
+            noise_optimization_level=int(cfg.sampler.get("noise_optimization_level", 3)),
+            p_readout_beta=(None if cfg.sampler.get("p_readout_beta", None) is None
+                            else float(cfg.sampler.get("p_readout_beta"))),
+            depth_noise=(None if cfg.sampler.get("depth_noise", None) is None
+                         else tuple(float(x) for x in cfg.sampler.get("depth_noise"))),
+        )
+        if sampler_kind in ("topk", "mps_topk") and noisy:
+            # top-k kinds read amplitudes, so there are no shots for the noise to act on
+            raise ValueError(f"sampler.kind={sampler_kind!r} reads amplitudes and cannot carry "
+                             "device noise; use a shot-drawing kind (ffsim, mps)")
         if sampler_kind == "ibm_hardware":
             from sqd_gqe.gqe.ibm_hardware_sampler import IbmHardwareSampler
             import os
@@ -134,32 +156,77 @@ class SqdFactory:
                 session_mode=bool(cfg.sampler.get("ibm_session_mode", False)),
                 session_max_time=cfg.sampler.get("ibm_session_max_time", None),
             )
-        else:
-            p_readout = float(cfg.sampler.get("p_readout", 0.0) or 0.0)
-            _pb = cfg.sampler.get("p_readout_beta", None)
-            p_readout_beta = None if _pb is None else float(_pb)
-            _dn = cfg.sampler.get("depth_noise", None)
-            depth_noise = None if _dn is None else tuple(float(x) for x in _dn)
-            is_noisy_sim = backend is not None and getattr(backend, "sim_kind", None) == "noisy_sim"
-            # amplitude_damping needs backend.t1_us/gate_time_2q_ns, which is only
-            # ever populated when is_noisy_sim -- gate it here so setting the flag
-            # without a *_noisy_sim backend fails loud (no sampler picks it up)
-            # rather than silently no-op-ing.
-            amplitude_damping = bool(cfg.sampler.get("amplitude_damping", False)) and is_noisy_sim
-            if p_readout > 0 or (p_readout_beta or 0) > 0 or is_noisy_sim:
-                from sqd_gqe.gqe.noisy_sampler import NoisyFfsimSampler
-                sampler = NoisyFfsimSampler(
-                    pool, shots_count=shots, p_readout=p_readout,
-                    seed=cfg.trainer.seed, rayon_threads=cfg.sampler.get("rayon_threads", None),
-                    backend=backend if is_noisy_sim else None,
-                    amplitude_damping=amplitude_damping, p_readout_beta=p_readout_beta,
-                    depth_noise=depth_noise,
-                )
+        elif sampler_kind in ("mps", "mps_topk"):
+            mps_kwargs = dict(
+                shots_count=shots,
+                max_bond=int(cfg.sampler.get("mps_max_bond", 256)),
+                abs_cutoff=float(cfg.sampler.get("mps_abs_cutoff", 1e-5)),
+                rel_cutoff=float(cfg.sampler.get("mps_rel_cutoff", 1e-5)),
+                dtype=cfg.sampler.get("mps_dtype", "complex64"),
+                route=bool(cfg.sampler.get("mps_route", False)),
+                max_gates=cfg.sampler.get("mps_max_gates", None),
+                gauge_option=cfg.sampler.get("mps_gauge_option", "simple"),
+                canonical_center=cfg.sampler.get("mps_canonical_center", None),
+                seed=cfg.trainer.seed,
+            )
+            if sampler_kind == "mps_topk":
+                from sqd_gqe.gqe.mps_topk_sampler import MpsTopKSampler
+                sampler = MpsTopKSampler(pool, top_k=int(top_k),
+                                         beam_width=cfg.sampler.get("mps_beam_width", None),
+                                         min_prob=cfg.sampler.get("min_prob", "auto"),
+                                         **mps_kwargs)
+            elif noisy:
+                from sqd_gqe.gqe.mps_sampler import NoisyMpsSampler
+                sampler = NoisyMpsSampler(pool, **noise_kw, **mps_kwargs)
             else:
-                sampler = FfsimSampler(
-                    pool, shots_count=shots, seed=cfg.trainer.seed,
-                    rayon_threads=cfg.sampler.get("rayon_threads", None),
+                from sqd_gqe.gqe.mps_sampler import MpsSampler
+                sampler = MpsSampler(pool, **mps_kwargs)
+        elif sampler_kind == "topk":
+            from sqd_gqe.gqe.sampler import ExactTopKSampler
+            sampler = ExactTopKSampler(
+                pool, shots_count=shots, top_k=int(top_k), seed=cfg.trainer.seed,
+                rayon_threads=cfg.sampler.get("rayon_threads", None),
+                min_prob=cfg.sampler.get("min_prob", "auto"),
+            )
+        elif sampler_kind != "ffsim":
+            raise ValueError(f"Unknown sampler.kind={sampler_kind!r}")
+        elif noisy:
+            from sqd_gqe.gqe.noisy_sampler import NoisyFfsimSampler
+            sampler = NoisyFfsimSampler(
+                pool, shots_count=shots, seed=cfg.trainer.seed,
+                rayon_threads=cfg.sampler.get("rayon_threads", None), **noise_kw,
+            )
+        else:
+            sampler = FfsimSampler(
+                pool, shots_count=shots, seed=cfg.trainer.seed,
+                rayon_threads=cfg.sampler.get("rayon_threads", None),
+            )
+        return sampler
+
+    def build_pipeline(self, cfg, backend=None):
+        """``backend`` (a HardwareBackend) is only required when
+        cfg.dynamic_resources is true -- it's part of the ResourceHead's
+        conditioning descriptor. Ignored otherwise."""
+        if cfg.sampler.get("kind", "ffsim") == "mps_topk":
+            incompatible = []
+            if cfg.sqd.get("enlarge_method", "symmetry_completion") != "None":
+                incompatible.append("sqd.enlarge_method=None")
+            if int(cfg.sqd.get("recover_iterations", 5)) != 0:
+                incompatible.append("sqd.recover_iterations=0")
+            if incompatible:
+                raise ValueError(
+                    "sampler.kind='mps_topk' requires " + " and ".join(incompatible)
+                    + " to preserve the selected top-K subspace."
                 )
+
+        system = self.build_system(cfg)
+        pool = self.build_operator_pool(cfg)
+
+        max_dim, shots = cfg.sqd.max_dim, cfg.sampler.shots
+        if bool(cfg.get("dynamic_resources", False)):
+            max_dim, shots = self._predict_resources(cfg, system, backend)
+
+        sampler = self.build_sampler(cfg, backend, shots, max_dim)
         sbd_launcher = cfg.sqd.get("sbd_launcher", None)
         sbd_solver_kwargs = cfg.sqd.get("sbd_solver_kwargs", None)
         pipeline = SqdPipeline(

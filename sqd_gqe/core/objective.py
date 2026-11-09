@@ -41,44 +41,54 @@ class GroupRelativeObjective(PolicyObjective):
         self.clip_low = clip_low
         self.clip_high = clip_high
 
-    def advantage(self, energies: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def _finite_energies(energies: torch.Tensor) -> torch.Tensor | None:
+        """Rank failed solves last; return None when the whole group failed."""
+        finite = torch.isfinite(energies)
+        if not bool(finite.any()):
+            return None
+        if not bool(finite.all()):
+            # Worst finite + 10 Ha. cost_reward.cost_adjusted_energies uses best finite + 10 Ha
+            # on its own (benchmark-only) path. Not a shared constant: both rank a failure
+            # last while the finite spread stays under 10 Ha.
+            energies = torch.where(finite, energies, energies[finite].max() + 10.0)
+        return energies
+
+    @staticmethod
+    def _normalise(energies):
         return (energies.mean() - energies) / (energies.std() + 1e-8)
+
+    def __call__(self, log_probs, context):
+        self._check(context)
+        energies = self._finite_energies(context["energies"])
+        if energies is None:
+            return log_probs.sum() * 0.0
+        win = torch.argmin(energies)
+        loss = -torch.mean(log_probs[win])
+        if torch.std(energies) == 0:
+            return loss
+        adv = self._normalise(energies)
+        ratio = self._ratio(log_probs, context)
+        if ratio.ndim == 2:
+            adv = adv.unsqueeze(1)
+        clipped_ratio = torch.clamp(ratio, 1.0 - self.clip_low, 1.0 + self.clip_high)
+        return loss - min((clipped_ratio * adv).mean(), (ratio * adv).mean())
+
+    @abstractmethod
+    def _ratio(self, log_probs, context):
+        """Importance ratio per token (GRPO) or per sequence (GSPO)."""
 
 
 class GRPOObjective(GroupRelativeObjective):
     """Token-level clipped group-relative policy optimization."""
 
-    def __call__(self, log_probs, context):
-        self._check(context)
-        win = torch.argmin(context["energies"])
-        loss = -torch.mean(log_probs[win])
-        if torch.std(context["energies"]) == 0:
-            return loss
-        adv = self.advantage(context["energies"])
-        ratio = torch.exp(log_probs - context["old_log_probs"])
-        clipped_ratio = torch.clamp(ratio, 1.0 - self.clip_low, 1.0 + self.clip_high)
-        clipped = (clipped_ratio * adv.unsqueeze(1)).mean()
-        unclipped = (ratio * adv.unsqueeze(1)).mean()
-        loss -= min(clipped, unclipped)
-        return loss
+    def _ratio(self, log_probs, context):
+        return torch.exp(log_probs - context["old_log_probs"])
 
 
 class GSPOObjective(GroupRelativeObjective):
     """Sequence-level group-relative policy optimization."""
 
-    def __call__(self, log_probs, context):
-        self._check(context)
-        seq_log_probs = log_probs.sum(dim=1)
-        win = torch.argmin(context["energies"])
-        loss = -torch.mean(log_probs[win])
-        if torch.std(context["energies"]) == 0:
-            return loss
-        adv = self.advantage(context["energies"])
+    def _ratio(self, log_probs, context):
         seq_len = context["gate_seqs"].shape[1]
-        old_seq_log_probs = context["old_log_probs"].sum(dim=1)
-        ratio = torch.exp((seq_log_probs - old_seq_log_probs) / seq_len)
-        clipped_ratio = torch.clamp(ratio, 1.0 - self.clip_low, 1.0 + self.clip_high)
-        clipped = (clipped_ratio * adv).mean()
-        unclipped = (ratio * adv).mean()
-        loss -= min(clipped, unclipped)
-        return loss
+        return torch.exp((log_probs.sum(dim=1) - context["old_log_probs"].sum(dim=1)) / seq_len)

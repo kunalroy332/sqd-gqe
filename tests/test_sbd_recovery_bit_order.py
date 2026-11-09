@@ -27,6 +27,7 @@ Driven by a stub binary that reads and writes the same byte layouts as sbd's
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -87,6 +88,23 @@ def _solver(tmp_path: Path):
 
 def _calls(log: Path) -> list[set[int]]:
     return [{int(x) for x in line.split()} for line in log.read_text().splitlines()]
+
+
+@pytest.mark.parametrize("native_path", ["/native/cuda/libs", None])
+def test_sbd_library_path_is_scoped_to_the_child(tmp_path, monkeypatch, native_path):
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/python/runtime/libs")
+    if native_path:
+        monkeypatch.setenv("SBD_LD_LIBRARY_PATH", native_path)
+    else:
+        monkeypatch.delenv("SBD_LD_LIBRARY_PATH", raising=False)
+    solver, _ = _solver(tmp_path)
+    binary = Path(solver.binary_path)
+    binary.write_text(binary.read_text() + "\nimport os\n"
+                      "open('loader_path.txt', 'w').write(os.environ['LD_LIBRARY_PATH'])\n")
+    solver._solve_once(np.array([HF], dtype=np.int64))
+    expected = f"{native_path}:/python/runtime/libs" if native_path else "/python/runtime/libs"
+    assert (tmp_path / "run" / "loader_path.txt").read_text() == expected
+    assert os.environ["LD_LIBRARY_PATH"] == "/python/runtime/libs"
 
 
 def test_carryover_determinants_come_back_unchanged(tmp_path):
