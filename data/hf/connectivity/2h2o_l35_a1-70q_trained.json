@@ -1,0 +1,306 @@
+{
+ "tag": "2h2o_l35_a1-70q_trained",
+ "n_logical_qubits": 70,
+ "circuits": [
+  {
+   "index": 0,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 2415,
+    "pair_density": 1.0,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 1.0,
+    "max_degree": 69,
+    "mean_degree": 69.0,
+    "two_qubit_gate_count": 9754
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 78,
+    "pair_density": 0.0064516129032258064,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 0.44871794871794873,
+    "max_degree": 3,
+    "mean_degree": 2.2285714285714286,
+    "two_qubit_gate_count": 33144
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 1,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 64,
+    "qubits_in_2q_gates": 60,
+    "distinct_2q_pairs": 46,
+    "pair_density": 0.01904761904761905,
+    "components": 14,
+    "largest_component": 7,
+    "largest_component_fraction": 0.1,
+    "max_degree": 2,
+    "mean_degree": 1.5333333333333334,
+    "two_qubit_gate_count": 176
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 64,
+    "qubits_in_2q_gates": 60,
+    "distinct_2q_pairs": 46,
+    "pair_density": 0.00380479735318445,
+    "components": 14,
+    "largest_component": 7,
+    "largest_component_fraction": 0.04487179487179487,
+    "max_degree": 2,
+    "mean_degree": 1.5333333333333334,
+    "two_qubit_gate_count": 160
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 2,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 68,
+    "pair_density": 0.028157349896480333,
+    "components": 2,
+    "largest_component": 35,
+    "largest_component_fraction": 0.5,
+    "max_degree": 2,
+    "mean_degree": 1.9428571428571428,
+    "two_qubit_gate_count": 4924
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 68,
+    "pair_density": 0.0056244830438378825,
+    "components": 2,
+    "largest_component": 35,
+    "largest_component_fraction": 0.22435897435897437,
+    "max_degree": 2,
+    "mean_degree": 1.9428571428571428,
+    "two_qubit_gate_count": 4912
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 3,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 2415,
+    "pair_density": 1.0,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 1.0,
+    "max_degree": 69,
+    "mean_degree": 69.0,
+    "two_qubit_gate_count": 9828
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 78,
+    "pair_density": 0.0064516129032258064,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 0.44871794871794873,
+    "max_degree": 3,
+    "mean_degree": 2.2285714285714286,
+    "two_qubit_gate_count": 51934
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 4,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 2415,
+    "pair_density": 1.0,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 1.0,
+    "max_degree": 69,
+    "mean_degree": 69.0,
+    "two_qubit_gate_count": 4998
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 81,
+    "qubits_in_2q_gates": 81,
+    "distinct_2q_pairs": 91,
+    "pair_density": 0.007526881720430108,
+    "components": 1,
+    "largest_component": 81,
+    "largest_component_fraction": 0.5192307692307693,
+    "max_degree": 3,
+    "mean_degree": 2.246913580246914,
+    "two_qubit_gate_count": 26553
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 5,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 68,
+    "pair_density": 0.028157349896480333,
+    "components": 2,
+    "largest_component": 35,
+    "largest_component_fraction": 0.5,
+    "max_degree": 2,
+    "mean_degree": 1.9428571428571428,
+    "two_qubit_gate_count": 7296
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 68,
+    "pair_density": 0.0056244830438378825,
+    "components": 2,
+    "largest_component": 35,
+    "largest_component_fraction": 0.22435897435897437,
+    "max_degree": 2,
+    "mean_degree": 1.9428571428571428,
+    "two_qubit_gate_count": 7296
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 6,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 103,
+    "pair_density": 0.04265010351966874,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 1.0,
+    "max_degree": 3,
+    "mean_degree": 2.942857142857143,
+    "two_qubit_gate_count": 14548
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 75,
+    "pair_density": 0.00620347394540943,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 0.44871794871794873,
+    "max_degree": 3,
+    "mean_degree": 2.142857142857143,
+    "two_qubit_gate_count": 23665
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 7,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 103,
+    "pair_density": 0.04265010351966874,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 1.0,
+    "max_degree": 3,
+    "mean_degree": 2.942857142857143,
+    "two_qubit_gate_count": 12164
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 73,
+    "qubits_in_2q_gates": 73,
+    "distinct_2q_pairs": 79,
+    "pair_density": 0.006534325889164599,
+    "components": 1,
+    "largest_component": 73,
+    "largest_component_fraction": 0.46794871794871795,
+    "max_degree": 3,
+    "mean_degree": 2.164383561643836,
+    "two_qubit_gate_count": 25592
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 8,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 68,
+    "pair_density": 0.028157349896480333,
+    "components": 2,
+    "largest_component": 35,
+    "largest_component_fraction": 0.5,
+    "max_degree": 2,
+    "mean_degree": 1.9428571428571428,
+    "two_qubit_gate_count": 4928
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 68,
+    "pair_density": 0.0056244830438378825,
+    "components": 2,
+    "largest_component": 35,
+    "largest_component_fraction": 0.22435897435897437,
+    "max_degree": 2,
+    "mean_degree": 1.9428571428571428,
+    "two_qubit_gate_count": 4912
+   },
+   "physical_total_qubits": 156
+  },
+  {
+   "index": 9,
+   "logical": {
+    "qubits_total": 70,
+    "qubits_touched_any_gate": 70,
+    "qubits_in_2q_gates": 70,
+    "distinct_2q_pairs": 2415,
+    "pair_density": 1.0,
+    "components": 1,
+    "largest_component": 70,
+    "largest_component_fraction": 1.0,
+    "max_degree": 69,
+    "mean_degree": 69.0,
+    "two_qubit_gate_count": 21750
+   },
+   "physical": {
+    "qubits_total": 156,
+    "qubits_touched_any_gate": 83,
+    "qubits_in_2q_gates": 83,
+    "distinct_2q_pairs": 93,
+    "pair_density": 0.007692307692307693,
+    "components": 1,
+    "largest_component": 83,
+    "largest_component_fraction": 0.532051282051282,
+    "max_degree": 3,
+    "mean_degree": 2.2409638554216866,
+    "two_qubit_gate_count": 63871
+   },
+   "physical_total_qubits": 156
+  }
+ ]
+}

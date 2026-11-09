@@ -1,0 +1,70 @@
+{
+ "backend": "ibm_kobe",
+ "window": [
+  "2026-10-02",
+  "2026-10-03"
+ ],
+ "split_active_qubits": 50,
+ "training": {
+  "46q": {
+   "jobs": 225,
+   "circuits": 4500,
+   "shots": 45000000,
+   "qpu_s": 14519,
+   "qpu_h": 4.033055555555555,
+   "per_iter_mean_s": 64.52888888888889,
+   "per_iter_median_s": 55,
+   "per_iter_min_s": 55,
+   "per_iter_max_s": 138,
+   "per_circuit_mean_s": 3.2264444444444442
+  },
+  "70q": {
+   "jobs": 364,
+   "circuits": 7280,
+   "shots": 72800000,
+   "qpu_s": 34626,
+   "qpu_h": 9.618333333333334,
+   "per_iter_mean_s": 95.12637362637362,
+   "per_iter_median_s": 81.0,
+   "per_iter_min_s": 55,
+   "per_iter_max_s": 209,
+   "per_circuit_mean_s": 4.756318681318682
+  },
+  "total": {
+   "jobs": 589,
+   "circuits": 11780,
+   "shots": 117800000,
+   "qpu_s": 49145,
+   "qpu_h": 13.651388888888889,
+   "per_iter_mean_s": 83.43803056027164,
+   "per_iter_median_s": 67,
+   "per_iter_min_s": 55,
+   "per_iter_max_s": 209,
+   "per_circuit_mean_s": 4.171901528013582
+  },
+  "errored_jobs": 4,
+  "errored_qpu_s": 8
+ },
+ "training_log_ids": {
+  "in_logs": 458,
+  "retrievable": 246,
+  "retrievable_qpu_s": 17522,
+  "not_retrievable": 212
+ },
+ "first_campaign": {
+  "jobs": 49,
+  "circuits": 490,
+  "shots": 49000000,
+  "qpu_s": 29481
+ },
+ "lucj": {
+  "jobs": 18,
+  "circuits": 18,
+  "shots": 1800000,
+  "qpu_s": 689
+ },
+ "fresh": {
+  "jobs": 29,
+  "qpu_s": 15798
+ }
+}

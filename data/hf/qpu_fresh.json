@@ -1,0 +1,425 @@
+{
+ "set": "hf",
+ "jobs": 52,
+ "found": 52,
+ "quantum_seconds": 23988,
+ "per_run": {
+  "2h2o_l35_a1-46q_trained": {
+   "job_id": "dbcmpshgv2cc73ealma0",
+   "quantum_seconds": 532,
+   "seconds": 532,
+   "created": "2026-10-22T01:54:59.069184Z",
+   "finished": "2026-10-22T07:52:16.697744Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_l35_a1-70q_trained": {
+   "job_id": "dbc67bhgv2cc73e9lgmg",
+   "quantum_seconds": 605,
+   "seconds": 605,
+   "created": "2026-10-21T07:03:11.095898Z",
+   "finished": "2026-10-21T12:16:29.610002Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_l35_a5-46q_trained": {
+   "job_id": "dbcmps7i0auc7393t8kg",
+   "quantum_seconds": 384,
+   "seconds": 384,
+   "created": "2026-10-22T01:54:56.814358Z",
+   "finished": "2026-10-22T02:59:21.837034Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_l35_a5-70q_trained": {
+   "job_id": "dbc679424mrc73ciug0g",
+   "quantum_seconds": 309,
+   "seconds": 309,
+   "created": "2026-10-21T07:03:01.143311Z",
+   "finished": "2026-10-21T08:33:12.893662Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_m_no29_a1-46q_trained": {
+   "job_id": "dbcmpsgc77vs7386jb7g",
+   "quantum_seconds": 576,
+   "seconds": 576,
+   "created": "2026-10-22T01:54:58.898288Z",
+   "finished": "2026-10-22T07:08:55.557148Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_m_no29_a1-70q_trained": {
+   "job_id": "dbc67bni0auc73du8rd0",
+   "quantum_seconds": 665,
+   "seconds": 665,
+   "created": "2026-10-21T07:03:10.978524Z",
+   "finished": "2026-10-21T12:05:23.686093Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_m_no29_a5-46q_trained": {
+   "job_id": "dbcmpsoc77vs7386jb80",
+   "quantum_seconds": 540,
+   "seconds": 540,
+   "created": "2026-10-22T01:54:59.146483Z",
+   "finished": "2026-10-22T08:02:10.014306Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_m_no29_a5-70q_trained": {
+   "job_id": "dbc6791gv2cc73e9lgfg",
+   "quantum_seconds": 332,
+   "seconds": 332,
+   "created": "2026-10-21T07:03:01.078884Z",
+   "finished": "2026-10-21T08:27:09.939002Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_s22_a1-46q_trained": {
+   "job_id": "dbc6790c77vs7385jfqg",
+   "quantum_seconds": 340,
+   "seconds": 340,
+   "created": "2026-10-21T07:03:00.732154Z",
+   "finished": "2026-10-21T08:14:06.450864Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_s22_a1-70q_trained": {
+   "job_id": "dbcmpsni0auc7393t8o0",
+   "quantum_seconds": 405,
+   "seconds": 405,
+   "created": "2026-10-22T01:54:58.993119Z",
+   "finished": "2026-10-22T07:29:48.088086Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_s22_a5-46q_trained": {
+   "job_id": "dbc678oc77vs7385jfq0",
+   "quantum_seconds": 377,
+   "seconds": 377,
+   "created": "2026-10-21T07:02:59.957469Z",
+   "finished": "2026-10-21T08:07:43.400036Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "2h2o_s22_a5-70q_trained": {
+   "job_id": "dbcmps1gv2cc73ealm70",
+   "quantum_seconds": 415,
+   "seconds": 415,
+   "created": "2026-10-22T01:54:56.760474Z",
+   "finished": "2026-10-22T02:52:08.299969Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a1-46q_trained": {
+   "job_id": "dbc679k24mrc73ciug30",
+   "quantum_seconds": 393,
+   "seconds": 393,
+   "created": "2026-10-21T07:03:02.203034Z",
+   "finished": "2026-10-21T09:08:35.948248Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a1-46q_untrained": {
+   "job_id": "db3orm4lf4us73c1mcag",
+   "quantum_seconds": 492,
+   "seconds": 492,
+   "created": "2026-10-08T12:34:32.910844Z",
+   "finished": "2026-10-08T14:30:52.189983Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a1-70q_trained": {
+   "job_id": "dbc67apgv2cc73e9lgkg",
+   "quantum_seconds": 480,
+   "seconds": 480,
+   "created": "2026-10-21T07:03:08.096735Z",
+   "finished": "2026-10-21T11:22:45.131087Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a1-70q_untrained": {
+   "job_id": "db3ornamb58s738852b0",
+   "quantum_seconds": 624,
+   "seconds": 624,
+   "created": "2026-10-08T12:34:37.488748Z",
+   "finished": "2026-10-08T15:06:15.153473Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a5-46q_trained": {
+   "job_id": "dbc679c24mrc73ciug20",
+   "quantum_seconds": 343,
+   "seconds": 343,
+   "created": "2026-10-21T07:03:01.987081Z",
+   "finished": "2026-10-21T08:55:23.934066Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a5-46q_untrained": {
+   "job_id": "db3ornslf4us73c1mcd0",
+   "quantum_seconds": 594,
+   "seconds": 594,
+   "created": "2026-10-08T12:34:39.455642Z",
+   "finished": "2026-10-08T15:26:39.597649Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a5-70q_trained": {
+   "job_id": "dbc679s24mrc73ciug40",
+   "quantum_seconds": 385,
+   "seconds": 385,
+   "created": "2026-10-21T07:03:03.776434Z",
+   "finished": "2026-10-21T09:32:16.409975Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "L46_a5-70q_untrained": {
+   "job_id": "db3oro4vf2bc73cti080",
+   "quantum_seconds": 700,
+   "seconds": 700,
+   "created": "2026-10-08T12:34:40.57801Z",
+   "finished": "2026-10-08T15:39:18.654979Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_l28_a1-46q_trained": {
+   "job_id": "dbcmpsni0auc7393t8lg",
+   "quantum_seconds": 446,
+   "seconds": 446,
+   "created": "2026-10-22T01:54:59.784983Z",
+   "finished": "2026-10-22T08:53:16.682034Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_l28_a1-70q_trained": {
+   "job_id": "dbcmpt7i0auc7393t8r0",
+   "quantum_seconds": 481,
+   "seconds": 481,
+   "created": "2026-10-22T01:55:01.050881Z",
+   "finished": "2026-10-22T09:55:55.347925Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_l28_a5-46q_trained": {
+   "job_id": "dbcmprs24mrc73cjuv2g",
+   "quantum_seconds": 423,
+   "seconds": 423,
+   "created": "2026-10-22T01:54:56.091157Z",
+   "finished": "2026-10-22T02:36:00.703848Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_l28_a5-70q_trained": {
+   "job_id": "dbcmps1gv2cc73ealm7g",
+   "quantum_seconds": 430,
+   "seconds": 430,
+   "created": "2026-10-22T01:54:57.009667Z",
+   "finished": "2026-10-22T03:12:45.203566Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_ll33_a1-46q_trained": {
+   "job_id": "dbcmpsvi0auc7393t8q0",
+   "quantum_seconds": 540,
+   "seconds": 540,
+   "created": "2026-10-22T01:55:00.043732Z",
+   "finished": "2026-10-22T09:26:57.565581Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_ll33_a1-70q_trained": {
+   "job_id": "dbc67d0c77vs7385jg3g",
+   "quantum_seconds": 859,
+   "seconds": 859,
+   "created": "2026-10-21T07:03:17.191674Z",
+   "finished": "2026-10-21T12:44:34.249086Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_ll33_a5-46q_trained": {
+   "job_id": "dbcmps9gv2cc73ealm90",
+   "quantum_seconds": 430,
+   "seconds": 430,
+   "created": "2026-10-22T01:54:57.717213Z",
+   "finished": "2026-10-22T05:11:05.235212Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_ll33_a5-70q_trained": {
+   "job_id": "dbc679c24mrc73ciug1g",
+   "quantum_seconds": 372,
+   "seconds": 372,
+   "created": "2026-10-21T07:03:01.649616Z",
+   "finished": "2026-10-21T08:48:54.994995Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a1-46q_trained": {
+   "job_id": "dbc679hgv2cc73e9lgg0",
+   "quantum_seconds": 405,
+   "seconds": 405,
+   "created": "2026-10-21T07:03:02.263317Z",
+   "finished": "2026-10-21T09:16:29.784019Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a1-46q_untrained": {
+   "job_id": "db3ngmklf4us73c1k98g",
+   "quantum_seconds": 501,
+   "seconds": 501,
+   "created": "2026-10-08T11:02:51.00815Z",
+   "finished": "2026-10-08T12:01:45.879848Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a1-70q_trained": {
+   "job_id": "dbc67ani0auc73du8rb0",
+   "quantum_seconds": 482,
+   "seconds": 482,
+   "created": "2026-10-21T07:03:07.533699Z",
+   "finished": "2026-10-21T11:04:30.308454Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a1-70q_untrained": {
+   "job_id": "db3ngno4qg6s73c1281g",
+   "quantum_seconds": 744,
+   "seconds": 744,
+   "created": "2026-10-08T11:02:55.489517Z",
+   "finished": "2026-10-08T13:33:07.990015Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a5-46q_trained": {
+   "job_id": "dbc679c24mrc73ciug2g",
+   "quantum_seconds": 302,
+   "seconds": 302,
+   "created": "2026-10-21T07:03:02.056351Z",
+   "finished": "2026-10-21T09:01:16.360721Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a5-70q_trained": {
+   "job_id": "dbc677s24mrc73ciufu0",
+   "quantum_seconds": 268,
+   "seconds": 268,
+   "created": "2026-10-21T07:02:55.859643Z",
+   "finished": "2026-10-21T07:20:07.168007Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_m_no23_a5-70q_untrained": {
+   "job_id": "db3ngnklf4us73c1k9bg",
+   "quantum_seconds": 690,
+   "seconds": 690,
+   "created": "2026-10-08T11:02:54.661858Z",
+   "finished": "2026-10-08T13:08:49.02538Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_s19_a1-46q_trained": {
+   "job_id": "dbc679424mrc73ciug00",
+   "quantum_seconds": 334,
+   "seconds": 334,
+   "created": "2026-10-21T07:03:00.888124Z",
+   "finished": "2026-10-21T08:20:46.339969Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_s19_a1-70q_trained": {
+   "job_id": "dbcmproc77vs7386jb4g",
+   "quantum_seconds": 341,
+   "seconds": 341,
+   "created": "2026-10-22T01:54:55.277092Z",
+   "finished": "2026-10-22T02:21:42.582042Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_s19_a5-46q_trained": {
+   "job_id": "dbc679oc77vs7385jfsg",
+   "quantum_seconds": 458,
+   "seconds": 458,
+   "created": "2026-10-21T07:03:03.775571Z",
+   "finished": "2026-10-21T09:40:35.875725Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "h2o_s19_a5-70q_trained": {
+   "job_id": "dbcmps1gv2cc73ealm6g",
+   "quantum_seconds": 374,
+   "seconds": 374,
+   "created": "2026-10-22T01:54:56.28198Z",
+   "finished": "2026-10-22T02:43:00.902064Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "llno28_a1-46q_trained": {
+   "job_id": "dbcmps8c77vs7386jb6g",
+   "quantum_seconds": 457,
+   "seconds": 457,
+   "created": "2026-10-22T01:54:57.956442Z",
+   "finished": "2026-10-22T06:03:42.350001Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "llno28_a1-70q_trained": {
+   "job_id": "dbc67a7i0auc73du8r90",
+   "quantum_seconds": 495,
+   "seconds": 495,
+   "created": "2026-10-21T07:03:05.012074Z",
+   "finished": "2026-10-21T10:13:56.48876Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "llno28_a1-70q_untrained": {
+   "job_id": "db3ngog4qg6s73c1282g",
+   "quantum_seconds": 766,
+   "seconds": 766,
+   "created": "2026-10-08T11:02:58.542497Z",
+   "finished": "2026-10-08T14:08:20.634175Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "llno28_a5-46q_trained": {
+   "job_id": "dbcmpsoc77vs7386jb90",
+   "quantum_seconds": 608,
+   "seconds": 608,
+   "created": "2026-10-22T01:54:59.576367Z",
+   "finished": "2026-10-22T08:38:39.973699Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "llno28_a5-70q_trained": {
+   "job_id": "dbc67a1gv2cc73e9lgig",
+   "quantum_seconds": 480,
+   "seconds": 480,
+   "created": "2026-10-21T07:03:04.264072Z",
+   "finished": "2026-10-21T10:04:45.192108Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno32_a1-46q_trained": {
+   "job_id": "dbbmmtoc77vs7384npm0",
+   "quantum_seconds": 333,
+   "seconds": 333,
+   "created": "2026-10-20T13:24:07.211465Z",
+   "finished": "2026-10-20T13:30:52.358055Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno32_a1-70q_trained": {
+   "job_id": "dbc679pgv2cc73e9lgi0",
+   "quantum_seconds": 393,
+   "seconds": 393,
+   "created": "2026-10-21T07:03:04.00924Z",
+   "finished": "2026-10-21T09:55:53.411054Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno32_a5-46q_trained": {
+   "job_id": "dbc678pgv2cc73e9lge0",
+   "quantum_seconds": 267,
+   "seconds": 267,
+   "created": "2026-10-21T07:02:59.771013Z",
+   "finished": "2026-10-21T07:53:22.926258Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno32_a5-70q_trained": {
+   "job_id": "dbc678pgv2cc73e9lgeg",
+   "quantum_seconds": 323,
+   "seconds": 323,
+   "created": "2026-10-21T07:02:59.950418Z",
+   "finished": "2026-10-21T07:59:24.876021Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno38_a1-46q_trained": {
+   "job_id": "dbcmprhgv2cc73ealm60",
+   "quantum_seconds": 337,
+   "seconds": 337,
+   "created": "2026-10-22T01:54:54.805733Z",
+   "finished": "2026-10-22T02:01:12.218936Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno38_a1-70q_trained": {
+   "job_id": "dbcmproc77vs7386jb40",
+   "quantum_seconds": 344,
+   "seconds": 344,
+   "created": "2026-10-22T01:54:55.161898Z",
+   "finished": "2026-10-22T02:15:11.726173Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno38_a5-46q_trained": {
+   "job_id": "dbcmprk24mrc73cjuv00",
+   "quantum_seconds": 405,
+   "seconds": 405,
+   "created": "2026-10-22T01:54:54.855401Z",
+   "finished": "2026-10-22T02:08:40.82171Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  },
+  "sno38_a5-70q_trained": {
+   "job_id": "dbcmpsni0auc7393t8mg",
+   "quantum_seconds": 409,
+   "seconds": 409,
+   "created": "2026-10-22T01:54:58.626514Z",
+   "finished": "2026-10-22T06:44:36.412098Z",
+   "backend": "<IBMBackend('ibm_kobe')>"
+  }
+ },
+ "missing": []
+}
