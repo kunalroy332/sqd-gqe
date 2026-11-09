@@ -11,7 +11,10 @@ license = {file = "LICENSE"}
 requires-python = ">=3.10"
 authors = [
     { name = "Kunal Kumar", email = "kunalkumar@ibm.com" },
+    { name = "Kimberlee Keithley" },
+    { name = "Ikko Hamamura" },
 ]
+keywords = ["quantum chemistry", "sample-based quantum diagonalization", "generative quantum eigensolver", "transformer", "IBM Quantum"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -39,7 +42,24 @@ dependencies = [
     "wandb>=0.23.1,<1",
 ]
 
+[project.urls]
+Repository = "https://github.com/kunalroy332/sqd-gqe"
+
 [project.optional-dependencies]
+# Aer is only needed for the *_noisy_sim backends (training against a simulated noise model).
+noise = [
+    "qiskit-aer>=0.17,<1",
+]
+# cuQuantum MPS samplers (sampler.kind=mps / mps_topk), Linux with an NVIDIA GPU only. The wheel must match the node's CUDA
+# major version: use cuquantum-python-cu12 and cupy-cuda12x on a CUDA 12 system. See docs/mps.md.
+mps = [
+    "cuquantum-python-cu13>=26.3",
+    "cupy-cuda13x>=14",
+]
+# Gaussian formatted-checkpoint import (benchmark/snoh3_fchk_import.py, snoh3_nh2o_active_spaces.py), used to build the active spaces.
+chem = [
+    "qc-iodata>=1.0",
+]
 dev = [
     "pytest",
     "ruff",
