@@ -111,7 +111,7 @@ circuits it had selected. All values here come from the re-sampled data. {ncell 
 <li><b>Recover</b>: each selected set of shots goes through the iterative configuration-recovery SQD loop (GPU, subspace dimension 20,000, 25 iterations, seed 1234).</li></ol>
 <h2 id="defs">2. Definitions used in every table</h2>
 <ul>
-<li><b>Error (mHa)</b> = recovered energy minus the DMRG reference energy of that molecule, times 1000. Positive means above DMRG.</li>
+<li><b>&Delta;E (mHa)</b> = E<sub>SQD</sub> &minus; E<sub>DMRG</sub> of that molecule, times 1000 (signed). Positive means the SQD energy is above DMRG.</li>
 <li><b>Valid shots</b>: shots (out of 100,000) with the correct alpha and beta electron numbers. Only these enter the ranking and the recovery.</li>
 <li><b>Raw excitation</b> (HF, S, D, T, Q, Higher): classification of the <i>measured bitstrings themselves</i> by excitation rank relative to the Hartree-Fock determinant, counted over all 100,000 shots weighted by multiplicity.</li>
 <li><b>Subspace excitation</b>: the same classification applied to the <i>determinant pairs</i> (alpha, beta) of the n&times;n product of recovered alpha strings that the solver diagonalizes. These counts total n<sup>2</sup>, not 100,000, and "Higher" is dominated by the pairing itself, so they are not a statement about individual shots.</li>

@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
-DIRS = {"hf": REPO / "circuit_analysis_hf", "tuned": REPO / "circuit_analysis_tuned", "t1": REPO / "circuit_analysis"}
+DIRS = {"hf": REPO / "data/hf", "tuned": REPO / "data/tuned"}
 
 
 def billed(service, jid):

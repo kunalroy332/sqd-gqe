@@ -93,7 +93,7 @@ def detail_table(d, l46, label, caption):
             "\n\\midrule\n" + sec("Untrained controls") + "\n" + with_blocks([r for r in allr if r["policy"] != "trained"], fmt))
     return (f"\\begin{{table}}[ht]\n\\centering\n\\caption{{{caption}}}\n\\label{{{label}}}\n\\small\n"
             f"\\resizebox{{\\linewidth}}{{!}}{{%\n\\begin{{tabular}}{{{col}}}\n\\toprule\n{head} & Depth (best/2nd) & 2q (best/2nd) & Valid shots (best/2nd) & "
-            f"Err best/2nd/merged (mHa) & Err E+D 1/2 (mHa) & Err best-SI (mHa) \\\\\n\\midrule\n{body}\n"
+            f"$\\Delta E$ best/2nd/merged (mHa) & $\\Delta E$ E+D 1/2 (mHa) & $\\Delta E$ best-SI (mHa) \\\\\n\\midrule\n{body}\n"
             f"\\bottomrule\n\\end{{tabular}}}}\n\\end{{table}}")
 
 
@@ -120,7 +120,7 @@ def exc_table(d, l46, label, caption):
             out.append(r"\addlinespace")
         out += [one(r, t) for t in ("best", "second", "merged")]
         prev = r
-    return long_env(label, caption, "Target/Lineage & Type & Energy (E$_h$) & Err (mHa) & S & D & T & Q & Higher", out)
+    return long_env(label, caption, "Target/Lineage & Type & Energy (E$_h$) & $\\Delta E$ (mHa) & S & D & T & Q & Higher", out)
 
 
 def raw_table(d, label, caption):
@@ -177,7 +177,7 @@ def master_table(d, label, caption):
 
 
 PLANNED = {lin: ["sno32", "h2o_s19", "sno38", "2h2o_s22", "L46", "h2o_m_no23", "llno28", "h2o_l28", "2h2o_m_no29", "h2o_ll33", "2h2o_l35"] for lin in ("a1-46q", "a5-46q", "a1-70q", "a5-70q")}
-MISSING_NOTE = os.environ.get("CA_MISSING", "1") == "1"   # the HF-penalty campaign plans all 11 tiers on all four lineages
+MISSING_NOTE = os.environ.get("CA_MISSING", "0") == "1"   # the HF-penalty campaign plans all 11 tiers on all four lineages
 
 
 def planned_missing(d):
@@ -210,7 +210,7 @@ def dmrg_table(d, label, caption):
             row = row.replace(f" & {e_s} & ", f" & $\\le${e_s}$^{{\\dagger}}$ & ", 1)
         out.append(row)
     return (f"\\begin{{table}}[ht]\n\\centering\n\\caption{{{caption}}}\n\\label{{{label}}}\n\\small\n\\setlength{{\\tabcolsep}}{{3pt}}\n"
-            "\\begin{tabular}{@{}lrrrll@{}}\n\\toprule\nTarget & DMRG ($\\eh$) & Best SQD ($\\eh$) & Error (mHa) & Lineage & Type \\\\\n"
+            "\\begin{tabular}{@{}lrrrll@{}}\n\\toprule\nTarget & DMRG ($\\eh$) & Best SQD ($\\eh$) & $\\Delta E$ (mHa) & Lineage & Type \\\\\n"
             "\\midrule\n" + "\n".join(out) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}")
 
 
@@ -251,6 +251,8 @@ def replace_env(text, label, new_env):
             env = new_env
             if kind == "table*" or label == "tab:dmrg-vs-sqd":
                 env = env.replace("\\begin{table}", "\\begin{table*}", 1).replace("\\end{table}", "\\end{table*}", 1)
+            if label in ("tab:zeroshot-master", "tab:dmrg-vs-sqd"):
+                env = env.replace("\\begin{table*}[ht]", "\\begin{table*}[!t]", 1)
             return text[:mm[0].start()] + env + text[mm[0].end():]
     raise AssertionError(label)
 

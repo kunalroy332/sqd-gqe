@@ -12,13 +12,13 @@ import json,glob,os,collections,numpy as np,sys
 import pathlib
 REPO=pathlib.Path(__file__).resolve().parents[3]
 ROOT=str(REPO/'circuit_analysis')
-INF=os.environ.get('INF_DIR','/tmp/inf')
+INF=os.environ.get('INF_DIR',str(REPO/'data'))
 DMRG={"sno32":-479.193381728830,"h2o_s19":-555.108832785690,"2h2o_s22":-631.083312007953,"h2o_m_no23":-555.125158274414,"llno28":-479.315056933618,"h2o_l28":-555.135057773478,"2h2o_m_no29":-631.118615946406,"h2o_ll33":-555.137396193158,"2h2o_l35":-631.132237762872,"L46":-479.314216460012,"sno38":-479.302278277561}
 NAME={"sno32":"SnOH3-me S 32q","sno38":"SnOH3-me M 38q","L46":"SnOH3-me L 46q","llno28":"SnOH3-me LL 56q","h2o_s19":"h2o S 38q","h2o_m_no23":"h2o M 46q","h2o_l28":"h2o L 56q","h2o_ll33":"h2o LL 66q","2h2o_s22":"2h2o S 44q","2h2o_m_no29":"2h2o M 58q","2h2o_l35":"2h2o L 70q"}
 MK=sorted(DMRG,key=len,reverse=True)
 def split(tag):
     m=next(k for k in MK if tag.startswith(k+"_")); return m,tag[len(m)+1:].rsplit("_",1)[0]
-SETS={"T1":(ROOT+"/rerecovery",ROOT+"/data",ROOT+"/chem"),"HF":(INF+"/inference_hf/circuit_analysis_rerecovery",INF+"/inference_hf/circuit_analysis",None),"tuned":(INF+"/inference_tuned/circuit_analysis_rerecovery",INF+"/inference_tuned/circuit_analysis",None)}
+SETS={"HF":(INF+"/hf/rerecovery",INF+"/hf/data",None),"tuned":(INF+"/tuned/rerecovery",INF+"/tuned/data",None)}
 R=collections.defaultdict(dict)   # (mol,lin) -> set -> info
 for s,(rd,dd,cd) in SETS.items():
     rc=collections.defaultdict(dict)

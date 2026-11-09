@@ -19,7 +19,7 @@ PROTOCOL = (
     r"electron-number-conserving shots in a subspace of up to 200 most-measured alpha strings (net CI dimension "
     r"40{,}000); circuits with no valid shot have no ranking energy and are excluded. ``Best''/``second'' are the two "
     r"lowest-ranking-energy circuits, ``merged'' pools the shots of every circuit with a finite ranking energy, and "
-    r"``E+D 1''/``E+D 2'' are the two circuits chosen by the earlier rule that combines the rank of the ranking energy (on a "
+    r"``E+D 1''/``E+D 2'' are the two circuits chosen by the rule that combines the rank of the ranking energy (on a "
     r"2000-dimensional ranking) with the rank by number of distinct measured bitstrings, recovered on the same fresh shots. Every recovery uses a 20{,}000-dimensional "
     r"subspace and 25 iterations. Errors are relative to the DMRG reference."
 )
@@ -31,14 +31,14 @@ PENDING = (
 CAPTIONS = {
     "pending": PENDING,
     "master": (
-        r"Zero-shot inference master summary, trained policies only, every lineage$\times$molecule combination. "
-        r"Each cell is energy (E$_h$)/error vs.\ DMRG (mHa). Depth/2q are the depth and two-qubit-gate count of the best circuit as transpiled and submitted to "
+        r"Zero-shot inference comprehensive summary, trained policies only, every lineage$\times$molecule combination. "
+        r"Each entry is energy (E$_h$)/deviation vs.\ DMRG (mHa). Depth/2q are the depth and two-qubit-gate count of the best circuit as transpiled and submitted to "
         r"\code{ibm\_kobe} (live transpilation at Qiskit optimization level 1); the offline estimate on the \code{ibm\_heron\_r2} basis is not used. "
         r"The distance of the generated circuits from the idealised LUCJ circuit is in Section~\ref{sec:divergence}. "
         r"Matched untrained controls are in Appendix~\ref{sec:appendix-inference-detail}. " + PROTOCOL
     ),
     "dmrg": (
-        r"Lowest recovered SQD energy vs.\ DMRG reference for every SnOH3-me-family target, taken over all lineages, "
+        r"Lowest recovered SQD energy vs.\ DMRG reference for every SnOH3-me-family target, with the signed deviation $\Delta E = E_{\mathrm{SQD}} - E_{\mathrm{DMRG}}$ (all positive), taken over all lineages, "
         r"policies and result types (best, second, merged, E+D 1/2) in Tables~\ref{tab:zeroshot-detail} and "
         r"\ref{tab:crossnorb-detail}; the lineage and type that achieved it are noted. DMRG references are from "
         r"Table~\ref{tab:dmrg-reference} (bond dimension 4000, 17 sweeps). Selecting the minimum over many results "
@@ -54,8 +54,8 @@ CAPTIONS = {
     "exc_L": (
         r"Recovered energy and excitation-level composition of the recovered determinant set for the SnOH3-me L tier, per "
         r"lineage/policy and circuit type. \textbf{Caution:} S/D/T/Q/higher are counts of determinant \emph{pairs} "
-        r"$(a_i,a_j)$ in the $n\times n$ Cartesian product of recovered alpha strings that the solver diagonalizes "
-        r"(Section~\ref{sec:recovery}), not counts out of the 100{,}000 shots; the per-shot picture is "
+        r"$(a_i,a_j)$ in the Cartesian product of the recovered string list with itself (the same list serves the alpha and the beta sector of these closed-shell systems; "
+        r"Section~\ref{sec:recovery}), not counts out of the 100{,}000 shots. With $n$ recovered strings the product has $n^2$ pairs, and the five columns sum to $n^2-1$ in every row; $n=20{,}000$ ($4\times10^{8}$ pairs) where the cap was reached; the per-shot picture is "
         r"Table~\ref{tab:raw-shot-excitation}. ``Higher'' absorbs every order above quadruple. " + SEE
     ),
     "detail_X": (

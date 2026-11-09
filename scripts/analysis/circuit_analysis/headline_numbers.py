@@ -9,7 +9,7 @@
 # that they have been altered from the originals.
 
 """Single source of the numbers quoted in the abstract, results, discussion and conclusion of the manuscript.
-Usage: python3 headline_numbers.py [--json OUT]   (reads circuit_analysis_hf/ circuit_analysis_tuned/ circuit_analysis/ and /tmp/inf/R3.pkl)"""
+Usage: python3 headline_numbers.py [--json OUT]   (reads data/hf/ and data/tuned/ and data/R3.pkl, which three_way_load.py builds from them)"""
 import collections, glob, json, os, pickle, sys
 import numpy as np
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -26,7 +26,7 @@ def load(tree):
 
 def main():
     out = {}
-    d, T = load("circuit_analysis_hf")
+    d, T = load("data/hf")
     tr = [v for v in d.values() if v["policy"] == "trained"]
     un = [v for v in d.values() if v["policy"] == "untrained"]
     fin = [v for v in tr if v["t"]["best"].get("err") is not None]
@@ -66,26 +66,18 @@ def main():
     out["valid_bins"] = [[lo, sum(1 for r in rows if lo <= r[0] < hi), float(np.median([r[1] for r in rows if lo <= r[0] < hi])), sum(1 for r in rows if lo <= r[0] < hi and r[1] < 25)] for lo, hi in ((0, 100), (100, 1000), (1000, 10000), (10000, 1e12))]
     out["valid_bins_total"] = len(rows)
     out["pending_cells_hf"] = sum(1 for v in d.values() for x in v["t"].values() if not x["done"])
-    dt, _ = load("circuit_analysis_tuned")
+    dt, _ = load("data/tuned")
     out["pending_cells_tuned"] = sum(1 for v in dt.values() for x in v["t"].values() if not x["done"])
     out["tuned_rows"] = sum(1 for v in dt.values() if v["policy"] == "trained")
-    R = pickle.load(open("/tmp/inf/R3.pkl", "rb"))
-    cells = [k for k, v in R.items() if {"T1", "HF", "tuned"} <= set(v)]
-    out["three_way_cells"] = len(cells)
-    for s in ("T1", "HF", "tuned"):
+    R = pickle.load(open(os.path.join(REPO, "data", "R3.pkl"), "rb"))
+    cells = [k for k, v in R.items() if {"HF", "tuned"} <= set(v)]
+    out["pair_cells"] = len(cells)
+    for s in ("HF", "tuned"):
         b = [R[k][s]["best"]["err"] for k in cells]; c = [R[k][s]["second"]["err"] for k in cells]
-        out[f"tw_{s}"] = {"best_med": float(np.median(b)), "best_mean": float(np.mean(b)), "second_med": float(np.median(c)), "min2_med": float(np.median([min(x, y) for x, y in zip(b, c)])),
-                          "depth_med": float(np.median([R[k][s]["best"]["depth"] for k in cells]))}
-    w = collections.Counter()
-    for k in cells:
-        ee = {s: min(R[k][s]["best"]["err"], R[k][s]["second"]["err"]) for s in ("T1", "HF", "tuned")}; w[min(ee, key=ee.get)] += 1
-    out["tw_wins_min2"] = dict(w)
-    w = collections.Counter()
-    for k in cells:
-        ee = {s: R[k][s]["best"]["err"] for s in ("T1", "HF", "tuned")}; w[min(ee, key=ee.get)] += 1
-    out["tw_wins_best"] = dict(w)
-    diff = [R[k]["HF"]["best"]["err"] - R[k]["T1"]["best"]["err"] for k in cells]
-    out["tw_hf_vs_t1_median_diff"] = float(np.median(diff)); out["tw_hf_better_than_t1"] = int(sum(x < 0 for x in diff))
+        out[f"pair_{s}"] = {"best_med": float(np.median(b)), "best_mean": float(np.mean(b)), "second_med": float(np.median(c)), "min2_med": float(np.median([min(x, y) for x, y in zip(b, c)])),
+                            "depth_med": float(np.median([R[k][s]["best"]["depth"] for k in cells])),
+                            "within_1": int(sum(x < 1 for x in b)), "within_5": int(sum(x < 5 for x in b)), "within_15": int(sum(x < 15 for x in b)), "above_30": sorted(round(x, 1) for x in b if x > 30)}
+    out["pair_tuned_lower_best"] = int(sum(R[k]["tuned"]["best"]["err"] < R[k]["HF"]["best"]["err"] for k in cells))
     print(json.dumps(out, indent=1, default=float))
     if "--json" in sys.argv: json.dump(out, open(sys.argv[sys.argv.index("--json") + 1], "w"), indent=1, default=float)
 

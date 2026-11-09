@@ -9,6 +9,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+#!/usr/bin/env bash
 # One command to refresh every inference-derived number, table and report from the cluster. Run from anywhere.
 #   scripts/analysis/circuit_analysis/refresh_all.sh
 # It does NOT need your IBM key. The QPU files (qpu_fresh.json) are made separately with fetch_qpu_inference_sets.py <hf|tuned>; rerun that
@@ -36,10 +37,10 @@ done
 cd scripts/analysis/circuit_analysis
 python3 inference_timing.py --refresh
 CA_ROOT="$REPO/circuit_analysis_hf" python3 make_tables.py
-(cd /tmp/inf && for s in hf tuned t1; do for d in circuit_analysis circuit_analysis_rerecovery; do rsync -a $B/inference_$s/$d/ inference_$s/$d/ 2>/dev/null || true; done; done)
+(cd /tmp/inf && for s in hf tuned; do for d in circuit_analysis circuit_analysis_rerecovery; do rsync -a $B/inference_$s/$d/ inference_$s/$d/ 2>/dev/null || true; done; done)
 INF_DIR=/tmp/inf python3 three_way_load.py > /dev/null
 INF_DIR=/tmp/inf python3 three_way_tables.py "$REPO/docs/report/manuscript/paper.tex"
 python3 divergence_tables.py "$REPO/docs/report/manuscript/paper.tex"
-for s in hf tuned t1; do python3 make_html_sets.py $s | tail -1; done
+for s in hf tuned; do python3 make_html_sets.py $s | tail -1; done
 (cd "$REPO/docs/report/manuscript" && pdflatex -interaction=nonstopmode paper.tex >/dev/null 2>&1; pdflatex -interaction=nonstopmode paper.tex 2>&1 | grep -E "Output written|^!")
 echo "Prose numbers (medians, counts, cost sentences) are not regenerated; see the checklist in docs/report/manuscript/README_refresh.txt"

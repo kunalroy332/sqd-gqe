@@ -13,7 +13,7 @@ Usage: python3 divergence_summary.py   (reads <tree>/divergence/*.json and <tree
 import glob, json, os, sys
 import numpy as np
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-TREES = {"t1": "circuit_analysis", "hf": "circuit_analysis_hf", "tuned": "circuit_analysis_tuned"}
+TREES = {"hf": "data/hf", "tuned": "data/tuned"}
 out = {}
 for k, t in TREES.items():
     sel = {}

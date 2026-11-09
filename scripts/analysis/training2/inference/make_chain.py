@@ -18,7 +18,8 @@ from pathlib import Path
 
 R = "/path/to/sqd-gqe-work"
 V = "/path/to/sqd-gqe/.venv"
-ROOT = {"hf": "inference_hf", "tuned": "inference_tuned", "t1": "inference_t1"}
+ROOT = {"hf": "inference_hf", "tuned": "inference_tuned", "t1": "inference_t1", "hf_seed2": "inference_hf_seed2", "tuned_seed2": "inference_tuned_seed2",
+        "hf_s8765": "inference_hf_s8765", "tuned_s8765": "inference_tuned_s8765"}
 COMMON = f"""module load cuda/13.2 nvhpc/26.5 hpcx/2.50
 export GLIBC_TUNABLES=glibc.rtld.optional_static_tls=2097152
 set -a

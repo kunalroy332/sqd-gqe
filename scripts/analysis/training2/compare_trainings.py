@@ -8,9 +8,9 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Training 1 versus Training 2: loss, raw error, gate pass, depth of the best circuit and the tracked quantities, by stage and lineage.
+"""Training runs of the shared Stage 1 and the three Stage-2 variants (no penalty, Hartree-Fock penalty, tuned reward): loss, raw error, gate pass, depth of the best circuit and the tracked quantities, by stage and lineage.
 
-Usage: python3 compare_trainings.py <dir with Training-2 out/*.json> <dir with Training-1 histories (production_final/out)> [paper.tex]
+Usage: python3 compare_trainings.py <dir with the training out/*.json> [paper.tex]
 Prints the tables; with paper.tex it rewrites the block between '% BEGIN T2COMPARE' and '% END T2COMPARE' (created before '% BEGIN TUNETABLE' if absent).
 All numbers are single-seed. 'Last 30' means the last 30 iterations of the run. Raw error is the best circuit's raw SQD energy error on admitted iterations only.
 Runs that were cancelled or are still running are reported with the number of iterations they have; nothing is extrapolated.
@@ -21,8 +21,8 @@ from pathlib import Path
 
 import numpy as np
 
-T2, T1 = Path(sys.argv[1]), Path(sys.argv[2])
-TEX = Path(sys.argv[3]) if len(sys.argv) > 3 else None
+T2 = Path(sys.argv[1])
+TEX = Path(sys.argv[2]) if len(sys.argv) > 2 else None
 LIN = [("a1", "46q", "A1-46q"), ("a5", "46q", "A5-46q"), ("a1", "70q", "A1-70q"), ("a5", "70q", "A5-70q")]
 T1S1 = {"a1_46q": "production_coverage46_a1_v3_s1234", "a5_46q": "production_coverage46_a5_v3_s1234",
         "a1_70q": "production_coverage70_a1_v3_s1234", "a5_70q": "production_coverage70_a5_v3_s1234"}
@@ -76,9 +76,9 @@ def f(x, d=1):
 rows = []
 for enc, size, lab in LIN:
     k = f"{enc}_{size}"
-    runs = [("T1 Stage 1", load(T1 / f"{T1S1[k]}.json")), ("T2 Stage 1", load(T2 / "out" / f"t2_s1_{k}.json")),
-            ("T1 Stage 2", t1s2(k)), ("T2 Stage 2, no penalty", load(T2 / "out" / f"t2_s2_{k}.json")),
-            ("T2 Stage 2, HF penalty", load(T2 / "out" / f"t2p_s2_{k}.json")), ("T2 Stage 2, tuned", load(T2 / "out" / f"t2t_s2_{k}.json"))]
+    runs = [("Stage 1", load(T2 / "out" / f"t2_s1_{k}.json")),
+            ("Stage 2, no penalty", load(T2 / "out" / f"t2_s2_{k}.json")),
+            ("Stage 2, HF penalty", load(T2 / "out" / f"t2p_s2_{k}.json")), ("Stage 2, tuned", load(T2 / "out" / f"t2t_s2_{k}.json"))]
     for name, h in runs:
         s = summ(h)
         if s:
@@ -91,11 +91,11 @@ for lab, name, s in rows:
 
 if TEX:
     L = ["% BEGIN T2COMPARE", "\\begin{table*}[ht]", "\\centering",
-         "\\caption{Training~1 against Training~2 (single seed per run), by stage and lineage. $n$ is the number of iterations of the run; ``gate'' the share of iterations that passed the admission gate; "
+         "\\caption{The training runs (single seed per run), by stage and lineage. $n$ is the number of iterations of the run; ``gate'' the share of iterations that passed the admission gate; "
          "``error'' the mean raw SQD error (mHa) of the best circuit over the admitted iterations of the last 30 iterations (``last'') and of the whole run (``all''); ``depth'' the median transpiled depth of the best circuit "
          "and ``$>$1000'' the share of iterations whose best circuit is deeper than 1{,}000; ``eff.\\ voc.'' the policy's effective vocabulary, ``valid'' the share of shots in the right spin sector, ``HF'' the share of the valid shots "
          "that is the Hartree--Fock determinant, ``HL'' the share that is a HOMO$\\to$LUMO excitation and ``$|\\alpha-\\beta|$'' the difference of the alpha-only and beta-only weights among the valid shots, all three tracked "
-         "quantities over the last 30 iterations (Training~1 did not record them). Runs that were cancelled (T2 Stage~2 without penalty, A5-46q, A5-70q) or are still running (tuned) are shown with the iterations they have.}",
+         "quantities over the last 30 iterations. Stage~1 is shared by the three Stage-2 variants. Runs that were stopped (Stage~2 without penalty, A5-46q and A5-70q) are shown with the iterations they have; the tuned run of A1-70q ended by a segmentation fault at iteration 137.}",
          "\\label{tab:t2-compare}", "\\scriptsize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}llrrrrrrrrrrrr@{}}", "\\toprule",
          "Lineage & Run & $n$ & gate (\\%) & error last & error all & depth & $>$1000 (\\%) & eff.\\ voc. & valid & HF & HL & $|\\alpha-\\beta|$ \\\\", "\\midrule"]
     prev = None

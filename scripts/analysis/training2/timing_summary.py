@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Per-iteration training time of Training 2 (Stage 1 and Stage 2), written as a LaTeX block for the manuscript.
+"""Per-iteration training time (Stage 1 and the Stage-2 variants), written as a LaTeX block for the manuscript.
 
 Usage: python3 timing_summary.py <dir with out/*.json from experiments/training2> <paper.tex>
 Reads wall_s, sample_s, diagonalize_s, refine_s, real_depth_transpile_s + best_depth_transpile_s and backward_s of every history row.
@@ -29,8 +29,8 @@ T1_S1 = {"a1_46q": ["production_coverage46_a1_v3_s1234"], "a5_46q": ["production
          "a1_70q": ["production_coverage70_a1_v3_s1234"], "a5_70q": ["production_coverage70_a5_v3_s1234"]}
 T1_S2 = {"a1_46q": ["hw_continue_46q_a1_s1234_v4"], "a1_70q": ["kawasaki_hw_70q_a1_s1234_v5"],
          "a5_46q": ["hw_continue_46q_a5_s1234_v1", "hw_continue_46q_a5_s1234_v2", "hw_continue_46q_a5_s1234_v3"], "a5_70q": ["kawasaki_hw_70q_a5_s1234_v4"]}
-RUNS = [("T1 Stage 1", "T1S1"), ("T2 Stage 1", "t2_s1_{lin}_{tag}"), ("T1 Stage 2", "T1S2"), ("T2 Stage 2, no penalty", "t2_s2_{lin}_{tag}"),
-        ("T2 Stage 2, HF penalty", "t2p_s2_{lin}_{tag}"), ("T2 Stage 2, tuned", "t2t_s2_{lin}_{tag}")]
+RUNS = [("Stage 1", "t2_s1_{lin}_{tag}"), ("Stage 2, no penalty", "t2_s2_{lin}_{tag}"),
+        ("Stage 2, HF penalty", "t2p_s2_{lin}_{tag}"), ("Stage 2, tuned", "t2t_s2_{lin}_{tag}")]
 LIN = [("a1", "46q", "A1-46q"), ("a5", "46q", "A5-46q"), ("a1", "70q", "A1-70q"), ("a5", "70q", "A5-70q")]
 
 
@@ -56,10 +56,10 @@ def row(h, hardware):
 
 def block(root):
     L = ["% BEGIN T2TIMING", "\\begin{table}[t]", "\\centering",
-         "\\caption{Time per iteration (seconds, mean over the iterations of each run) by pipeline step for Training~1 (T1) and Training~2 (T2), Stage~1 on the simulator and Stage~2 on \\code{ibm\\_kobe}; the last column is the total wall time of the run with the stalled Stage-2 iterations removed. The Training~1 Stage-2 run of A5-46q is the three resumed pieces. "
+         "\\caption{Time per iteration (seconds, mean over the iterations of each run) by pipeline step, Stage~1 on the simulator and Stage~2 on \\code{ibm\\_kobe}; the last column is the total wall time of the run with the stalled Stage-2 iterations removed. "
          "In the Stage-2 rows, iterations whose circuit sampling took longer than one hour (device-queue stalls caused by Runtime jobs left queued by cancelled Slurm jobs, our own error) are "
          "excluded from the means and from the total, and counted in the column ``stalled''; Stage-1 iterations are all kept, including the ferrocene iterations, whose simulation can take up to an hour. "
-         "The sampling column of Stage~2 includes the IBM device queue. $n$ is the number of iterations the run has (the tuned runs were still in progress).}",
+         "The sampling column of Stage~2 includes the IBM device queue. $n$ is the number of iterations the run has.}",
          "\\label{tab:t2-timing}", "\\scriptsize", "\\resizebox{\\linewidth}{!}{%", "\\begin{tabular}{@{}llrrrrrrrrr@{}}", "\\toprule",
          "Run & Lineage & $n$ & wall & sampling & diagonalize & refine & transpile & backward & stalled & total (h) \\\\", "\\midrule"]
     for si, (label, pat) in enumerate(RUNS):

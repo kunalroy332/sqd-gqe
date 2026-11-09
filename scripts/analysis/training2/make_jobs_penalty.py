@@ -32,9 +32,7 @@ def main(outdir):
         body = body.replace(f"#SBATCH -J {name}", f"#SBATCH -J {new}")
         for sec in ("logs", "out", "ckpt", "track", "ibm_jobs"):
             body = body.replace(f"/{sec}/{name}", f"/{sec}/{new}")
-        body = body.replace("benchmark/amortized_train.py", "benchmark/amortized_train_hf.py")
         body = body.replace("--sampler-kind ibm_hardware", f"--cost-lambda-hf {LAMBDA_HF} --sampler-kind ibm_hardware")
-        assert name not in body.replace(f"{mj.EXP}/ckpt/t2_s1", "") or True
         (out / "jobs" / f"{new}.sbatch").write_text(body)
         sub.append(f"J=$(sbatch --parsable {mj.EXP}/jobs/{new}.sbatch); echo \"{new} $J\" >> {mj.EXP}/submitted_penalty.txt")
     sub.append(f"cat {mj.EXP}/submitted_penalty.txt")

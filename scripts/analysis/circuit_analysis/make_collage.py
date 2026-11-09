@@ -17,6 +17,7 @@ two lowest-ranking-energy circuits ("best", "2nd"). A compound without a finishe
 """
 import json
 import sys
+import glob
 from pathlib import Path
 
 import matplotlib
@@ -31,7 +32,8 @@ from tables_data import LABEL, ROOT, coverage_matrix, load
 OUT = ROOT / "figures"
 
 
-def panel(ax, run, rank, title):
+def panel(ax, run, rank, title, ed=None):
+    ed = ed or {}
     circs = run["circuits"]
     n = len(circs)
     frac = np.zeros((len(ROWS), n))
@@ -51,7 +53,11 @@ def panel(ax, run, rank, title):
         ax.text(j, -0.62, str(c["depth_live"]), ha="center", va="bottom", fontsize=5.2, fontweight="bold", clip_on=False)
     ax.text(-0.62, -0.62, "Depth", ha="right", va="bottom", fontsize=5.2, fontweight="bold", clip_on=False)
     ax.set_yticks(range(len(ROWS)), [r[1] for r in ROWS], fontsize=5.5)
-    ax.set_xticks(range(n), [f"{j + 1}\n" + {1: "best", 2: "2nd"}.get(rank.get(j), "") for j in range(n)], fontsize=5.5)
+    def _lab(j):
+        t = {1: "best", 2: "2nd"}.get(rank.get(j), "")
+        e = ed.get(j, "")
+        return f"{j + 1}\n{t}\n{e}" if (t or e) else f"{j + 1}\n\n"
+    ax.set_xticks(range(n), [_lab(j) for j in range(n)], fontsize=5.2)
     ax.set_xticks(np.arange(-0.5, n, 1), minor=True)
     ax.set_yticks(np.arange(-0.5, len(ROWS), 1), minor=True)
     ax.grid(which="minor", color="white", linewidth=0.8)
@@ -69,6 +75,9 @@ def empty(ax, title, why):
 
 def collage(lineage, policy="trained"):
     d = load()
+    SEL = {}
+    for f in sorted(glob.glob(str(ROOT / "selection_batch*.json"))):
+        SEL.update(json.load(open(f)))
     cm = coverage_matrix(d)
     mols = sorted(LABEL, key=lambda k: (LABEL[k][1], LABEL[k][2]))
     items = []
@@ -79,7 +88,7 @@ def collage(lineage, policy="trained"):
         items.append((mk, st))
     ncol = 2
     nrow = (len(items) + ncol - 1) // ncol
-    fig, axes = plt.subplots(nrow, ncol, figsize=(7.2, 2.0 * nrow + 0.5), squeeze=False)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(7.2, 1.2 * nrow + 0.3), squeeze=False)
     for ax in axes.ravel():
         ax.axis("off")
     for k, (mk, st) in enumerate(items):
@@ -92,14 +101,19 @@ def collage(lineage, policy="trained"):
             rr = json.loads((ROOT / "rerank" / f"{tag}.json").read_text())
             fin = sorted((c for c in rr["circuits"] if c["energy_40000"] is not None), key=lambda c: c["energy_40000"])
             rank = {c["index"]: i + 1 for i, c in enumerate(fin[:2])}
-            panel(ax, run, rank, title)
+            ed = {}
+            sl = SEL.get(tag, {})
+            if sl.get("old_best") is not None:
+                ed.setdefault(sl["old_best"], []).append("E+D 1st")
+            if sl.get("old_second") is not None:
+                ed.setdefault(sl["old_second"], []).append("E+D 2nd")
+            ed = {k: "/".join(v) for k, v in ed.items()}
+            panel(ax, run, rank, title, ed)
         else:
             empty(ax, title, "queued: run not yet performed\n(cluster maintenance)")
     handles = [Patch(facecolor=c, edgecolor="k", label=l) for c, l in zip(BIN_COLORS, BIN_LABELS)]
     fig.legend(handles=handles, loc="lower center", ncol=10, fontsize=5.5, frameon=False, handlelength=1.1, columnspacing=0.8)
-    fig.suptitle(f"{lineage.upper()} {policy}: raw-shot excitation composition of the 10 sampled circuits per compound "
-                 "(% of 100,000 shots; depth = as submitted to ibm_kobe)", fontsize=7.5, y=0.995)
-    fig.tight_layout(rect=(0, 0.03, 1, 0.975), h_pad=1.6, w_pad=0.8)
+    fig.tight_layout(rect=(0, 0.02, 1, 1.0), h_pad=0.3, w_pad=0.8)
     out = OUT / f"collage_{lineage}_{policy}.png"
     fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)

@@ -46,7 +46,7 @@ MOL = {
     "h2o_s19": "molecules/small/SnOH3-me-h2o_S_19o30e_mp2no_def2svp.yaml",
     "2h2o_s22": "molecules/small/SnOH3-me-2h2o_S_22o36e_mp2no_def2svp.yaml",
 }
-TREES = {"hf": "circuit_analysis_hf", "tuned": "circuit_analysis_tuned", "t1": "circuit_analysis"}
+TREES = {"hf": "data/hf", "tuned": "data/tuned"}
 MAX_VOCAB = 110
 
 

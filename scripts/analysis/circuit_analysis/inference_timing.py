@@ -8,20 +8,19 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Inference timing and cost table of the three model sets (Training 1, HF penalty, tuned reward), rebuilt from the cluster's Slurm records and IBM's QPU records.
+"""Inference timing and cost table of the two training configurations (Hartree-Fock penalty, tuned reward), rebuilt from the cluster's Slurm records and IBM's QPU records.
 
     python3 inference_timing.py --refresh [--tex PATH]     # re-pull sacct from roquo, rebuild the per-set Slurm exports, rewrite the table block in the paper
     python3 inference_timing.py [--tex PATH]               # rebuild the table from the files already on disk
 
-The IBM QPU files (<tree>/qpu_fresh.json) need your key and are made by fetch_qpu_inference_sets.py (hf | tuned); the Training-1 value is
-circuit_analysis/qpu_usage.json. Missing or partial inputs are set in red in the table; nothing is estimated. Rewrites '% BEGIN INFTIMING'..'% END INFTIMING'.
+The IBM QPU files (<tree>/qpu_fresh.json) need your key and are made by fetch_qpu_inference_sets.py (hf | tuned); Missing or partial inputs are set in red in the table; nothing is estimated. Rewrites '% BEGIN INFTIMING'..'% END INFTIMING'.
 """
 import argparse, collections, glob, json, os, re, subprocess, sys
 import numpy as np
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-SETS = [("Training 1", "circuit_analysis", "timing_sacct.psv", 32), ("HF penalty", "circuit_analysis_hf", "timing_sacct_hf.psv", 44), ("tuned reward", "circuit_analysis_tuned", "timing_sacct.psv", 44)]
-PAT = {"circuit_analysis": r"^(ca|rr)_(?!hf_|tuned_)", "circuit_analysis_hf": r"^(ca|rr|fin)_hf_", "circuit_analysis_tuned": r"^(ca|rr|fin)_tuned_"}
+SETS = [("HF penalty", "data/hf", "timing_sacct_hf.psv", 44), ("tuned reward", "data/tuned", "timing_sacct.psv", 44)]
+PAT = {"data/hf": r"^(ca|rr|fin)_hf_", "data/tuned": r"^(ca|rr|fin)_tuned_"}
 RED = lambda s: "{\\color{red}" + s + "}"
 
 
@@ -36,7 +35,7 @@ def refresh():
             except Exception:
                 pass
         keep = [r for r in rows if (r[0] in ids) or re.match(PAT[tree], r[1])]
-        if tree == "circuit_analysis":   # the Training-1 export is the original one; only add what is missing
+        if False:
             old = {l.split("|")[0] for l in open(f"{REPO}/{tree}/{fname}")}
             keep = [r for r in keep if r[0] not in old]
             if keep:
@@ -87,9 +86,9 @@ def qpu(tree, n_runs):
 
 
 def block():
-    L = ["% BEGIN INFTIMING", "\\begin{table*}[t]", "\\centering",
-         "\\caption{Inference timing and cost of the three model sets (one zero-shot run = ten circuits sampled once on \\code{ibm\\_kobe} at 100{,}000 shots, ranked, then up to five recoveries). Wall times are Slurm elapsed times of the finished jobs on the roquo cluster; ``jobs'' counts finished jobs, failed, cancelled and timed-out jobs are listed separately and not counted. Recovery jobs use two GPUs each. QPU time is the time IBM billed for the sampling jobs (job records); Training~1 covers its 32 trained runs (the eight untrained controls are not included); the billed QPU time of Training~1 is given for the 24 sampling jobs of its first campaign, for which IBM records were retrieved. Recoveries still running when the table was made are listed in the row ``Still running'' and are not counted.}",
-         "\\label{tab:inference-timing}", "\\small", "\\renewcommand{\\arraystretch}{1.2}", "\\setlength{\\tabcolsep}{4pt}",
+    L = ["% BEGIN INFTIMING", "\\begin{table*}[!t]", "\\centering",
+         "\\caption{Inference timing and cost of the two training configurations (one zero-shot run = ten circuits sampled once on \\code{ibm\\_kobe} at 100{,}000 shots, ranked, then up to five recoveries). Wall times are Slurm elapsed times of the finished jobs on the roquo cluster; ``jobs'' counts finished jobs, failed, cancelled and timed-out jobs are listed separately and not counted. Recovery jobs use two GPUs each. QPU time is the time IBM billed for the sampling jobs (job records); the untrained controls are not included. Recoveries still running when the table was made are listed in the row ``Still running'' and are not counted.}",
+         "\\label{tab:inference-timing}", "\\small", "\\renewcommand{\\arraystretch}{1.15}", "\\setlength{\\tabcolsep}{4pt}",
          "\\begin{tabular}{@{}llrrrr@{}}", "\\toprule", "Set & Stage & jobs & wall (h) & mean per job (min) & GPU-hours \\\\", "\\midrule"]
     nm = {"sample": ("Sampling and transpilation (IBM round trip)", 1), "rank": ("Ranking diagonalisation", 2), "rec_bs": ("Recovery: best / second", 2), "rec_ed": ("Recovery: E+D 1 / 2", 2), "rec_m": ("Recovery: merged", 2)}
     for lab, tree, fname, nplan in SETS:

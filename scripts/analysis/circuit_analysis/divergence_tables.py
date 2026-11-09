@@ -13,7 +13,7 @@ Usage: python3 divergence_tables.py PAPER.tex    (rewrites the blocks '% BEGIN D
 import glob, json, os, sys
 import numpy as np
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-TREES = [("Training 1", "circuit_analysis"), ("HF penalty", "circuit_analysis_hf"), ("tuned", "circuit_analysis_tuned")]
+TREES = [("HF penalty", "data/hf"), ("tuned reward", "data/tuned")]
 
 NAME = {"sno32": "SnOH3-me S (32q)", "h2o_s19": "SnOH3-me-h2o S (38q)", "2h2o_s22": "SnOH3-me-2h2o S (44q)"}
 ORDER = ["sno32", "h2o_s19", "2h2o_s22"]
@@ -36,7 +36,7 @@ def load(tree):
 
 def summary_block():
     L = ["% BEGIN DIVSUM", "\\begin{table}[!tp]", "\\centering",
-         "\\caption{Ideal (noiseless) distance of the generated circuits from the idealised LUCJ circuit (Section~\\ref{sec:divergence}), medians over the circuits of the three small tiers (SnOH3-me S, SnOH3-me-h2o S, SnOH3-me-2h2o S; ten circuits per run; 8 runs for Training~1, 12 for the HF penalty and 11 for the tuned reward, whose SnOH3-me-2h2o S run with A5-70q has no best and second circuit). $F$: state fidelity; $H$: Hellinger distance between the determinant distributions; $d_{\\mathrm{HF}}$: distance of the two states up to a global phase (a lower bound of the operator distance); ``near'': circuits with $F>0.5$. Selected = best and second circuit of the ranking. The per-circuit values are in Appendix~\\ref{sec:appendix-divergence}.}",
+         "\\caption{Ideal (noiseless) distance of the generated circuits from the idealised LUCJ circuit (Section~\\ref{sec:divergence}), medians over the circuits of the three small tiers (SnOH3-me S, SnOH3-me-h2o S, SnOH3-me-2h2o S; ten circuits per run; 12 runs for the Hartree--Fock penalty and 11 for the tuned reward, whose SnOH3-me-2h2o S run with A5-70q has no best and second circuit). $F$: state fidelity; $H$: Hellinger distance between the determinant distributions; $d_{\\mathrm{HF}}$: distance of the two states up to a global phase (a lower bound of the operator distance); ``near'': circuits with $F>0.5$. Selected = best and second circuit of the ranking. The per-circuit values are in Appendix~\\ref{sec:appendix-divergence}.}",
          "\\label{tab:divergence-summary}", "\\footnotesize", "\\renewcommand{\\arraystretch}{1.15}", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}llrrrrrr@{}}", "\\toprule",
          "Set & Circuits & $n$ & $F$ & $H$ & $d_{\\mathrm{HF}}$ & near & depth \\\\", "\\midrule"]
     for lab, tree in TREES:
@@ -70,7 +70,7 @@ def app_block():
                 tag = f"{mk}_{lin}_trained"
                 if tag not in runs: continue
                 for i, (c, d, role) in enumerate(runs[tag][1]):
-                    run = f"{NAME[mk]}, {lin.upper()}" if i == 0 else ""
+                    run = f"{NAME[mk]}, {lin[:2].upper()}{lin[2:]}" if i == 0 else ""
                     op = f"{c['op_norm']:.2f}" if c.get("op_norm") is not None else "--"
                     L.append(f"{run} & {c['index'] + 1} & {role} & {d['depth_live']} & {f3(c['F'])} & {f3(c['H'])} & {f3(c['JS'])} & {f3(c['d_HF'])} & {op} & \\\\")
                 L.append("\\addlinespace")

@@ -29,7 +29,7 @@ import numpy as np
 
 SET = sys.argv[1]
 REPO = Path(__file__).resolve().parents[3]
-TREE = {"t1": "circuit_analysis", "hf": "circuit_analysis_hf", "tuned": "circuit_analysis_tuned"}[SET]
+TREE = {"hf": "data/hf", "tuned": "data/tuned"}[SET]
 os.environ["CA_ROOT"] = str(REPO / TREE)
 sys.path.insert(0, str(Path(__file__).parent))
 from tables_data import DMRG, LABEL, ROOT, load  # noqa: E402
@@ -37,7 +37,7 @@ import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-T2 = Path("/tmp/t2/out")
+T2 = REPO / "data" / "training"
 OUTDIR = REPO / "docs/reports"
 NAMES = {"t1": "training1", "hf": "hf_penalty", "tuned": "tuned_reward"}
 E = html.escape
@@ -51,7 +51,7 @@ if SET == "t1":
 else:
     PLANNED = {l: list(ALLMOL) for l in LINS}
 NPLAN = sum(len(v) for v in PLANNED.values())
-TITLE = {"t1": "Training 1", "hf": "Training 2, Hartree-Fock penalty (main set)", "tuned": "Training 2, jointly tuned reward"}[SET]
+TITLE = {"t1": "Training 1", "hf": "Hartree-Fock penalty (main configuration)", "tuned": "tuned reward"}[SET]
 T2PRE = {"hf": "t2p_s2", "tuned": "t2t_s2"}.get(SET)
 LAMBDA = {"t1": "no HF term (lambda_exc 2.0, lambda_cov 10.0)", "hf": "lambda_HF 0.05 (lambda_exc 2.0, lambda_cov 10.0)",
           "tuned": "lambda_HF 0.07, lambda_spin 0.77, c_H 0.26, lambda_exc 3.9, lambda_cov 7.2"}[SET]
@@ -135,6 +135,12 @@ status = (f"all {NPLAN} planned trained runs were sampled on ibm_kobe; {nfin} ha
           + (f", and {_nsel} run{'s' if _nsel != 1 else ''} had a single circuit with valid shots, so the ranking found no best and second circuit" if _nsel else "")
           + (f"; {PENDING_CELLS} recovery result{'s' if PENDING_CELLS != 1 else ''} still running" if PENDING_CELLS else "")) if SET != "t1" else \
          (f"all {nmeas} Training 1 runs are available: the 24 of the first campaign and the 8 on the two tiers added later (SnOH3-me M 38q and SnOH3-me-h2o L 56q, four lineages); the other 12 (molecule x lineage) cells were not run with this set")
+
+REPEAT_NOTE = {
+    "hf": " The HF-penalty run of SnOH3-me LL with A5-46q had a single circuit with valid shots in the main campaign (seed 1234). The ten sequences were drawn again with seed 8765: eight circuits had valid shots, but every recovery stays near 200 mHa (best 203, second 199, merged 205), so the test case is excluded from the statistics.",
+    "tuned": " The tuned-reward run of SnOH3-me-2h2o S with A5-70q had a single circuit with valid shots in the main campaign (seed 1234). The ten sequences were drawn again with seed 8765: five circuits had valid shots and the best circuit recovers to 0.07 mHa; this second draw is the one reported here.",
+}.get(SET, "")
+status = status + REPEAT_NOTE
 _red = "Entries in <span class=\"pend\">red</span> are not available." if (PENDING_CELLS or SET == "t1") else "Nothing in this report is pending."
 BANNER = (f'<div class="note warn"><b>Status.</b> {status}. {_red} '
           f'No number in this report is taken from another model set. Reference date of the data: 2026-10-23.</div>')
@@ -192,23 +198,21 @@ details{{border:1px solid var(--line);border-radius:6px;margin:10px 0;padding:6p
 img{{max-width:100%;height:auto}}nav a{{margin-right:12px}}.mut{{color:var(--mut)}}
 </style></head><body><main>
 <h1>Zero-shot inference of the {E(TITLE)} models</h1>
-<p class="mut">Part of the three-report release of the amortized SQD-GQE study (Training 1, HF penalty, tuned reward). Reward: {E(LAMBDA)}.</p>
+<p class="mut">Part of the two-report release of the amortized SQD-GQE study (Hartree-Fock penalty, tuned reward). Reward: {E(LAMBDA)}.</p>
 {BANNER}
-<nav><a href="#overview">Overview</a><a href="#training">Training</a><a href="#summary">Master table</a><a href="#chemistry">Chemistry at inference</a>
-<a href="#tvi">Training vs inference</a><a href="#threeway">Three-way comparison</a><a href="#timing">Timing</a><a href="#runs">Per-run detail</a><a href="#raw">Raw data</a></nav>
+<nav><a href="#overview">Overview</a><a href="#training">Training</a><a href="#summary">Summary table</a><a href="#chemistry">Chemistry at inference</a>
+<a href="#tvi">Training vs inference</a><a href="#threeway">Comparison of the two configurations</a><a href="#timing">Timing</a><a href="#runs">Per-run detail</a></nav>
 <h2 id="overview">1. What this set is</h2>""")
 
 OV = {
     "t1": "Training 1 is the first recipe: Stage 1 with a 32-operator vocabulary (simulator, early stop after 90-132 iterations), Stage 2 with a 74- or 110-operator vocabulary on <code>ibm_kobe</code> (88-150 iterations, chains of resumed runs), "
           "output head, token embedding and prompt encoder re-initialised at the handoff, best-score checkpoints. The reward has the excitation, coverage and overshoot terms only. It carries no per-iteration chemistry tracking.",
-    "hf": "The main set of the paper. Training 2: vocabulary 110 in both stages, every tensor carried from Stage 1 to Stage 2, fixed 150 + 150 iterations without early stop, per-iteration chemistry tracking; Stage 2 adds a Hartree-Fock penalty "
-          "(lambda_HF = 0.05) to the reward. Final (not best-score) Stage-2 policies are used. Stage 1 is shared with the tuned set and the no-penalty run.",
-    "tuned": "Training 2 with the jointly tuned reward (configuration 3 of the 42-configuration search: lambda_HF 0.07, lambda_spin 0.77, entropy coefficient c_H 0.26, lambda_exc 3.9, lambda_cov 7.2). Same Stage 1 as the HF-penalty set. "
-             "The A1-70q policy is the one saved at iteration 129 of 137 (the run ended by a segmentation fault in the transpiler); no resume was done."}[SET]
+    "hf": "This is the main configuration of the manuscript. The policies were trained in two stages, 150 iterations on a noiseless simulator and then 150 iterations on <code>ibm_kobe</code>. In the second stage, the reward contains a Hartree-Fock penalty (weight 0.05), which keeps the policy from producing only the reference determinant. The final policies of the training are used. The first stage is shared with the tuned-reward configuration.",
+    "tuned": "This is the comparison configuration of the manuscript. The policies were trained in the same two stages as the main configuration, but the reward of the second stage uses weights that were chosen by a joint search on a noisy simulator (Hartree-Fock penalty 0.07, spin-balance weight 0.77, entropy coefficient 0.26, excitation weight 3.9, coverage weight 7.2). The first stage is the same as in the main configuration. For the policy trained for 70 qubits with the A1 conditioning, the saved policy of iteration 129 is used, because that training run ended at iteration 137 with a crash of the transpiler."}[SET]
 A(f"<p>{OV}</p>")
-A("""<p>Inference protocol (identical for all three sets): the policy draws <b>10</b> gate sequences (seed 1234) for an unseen SnOH<sub>3</sub>-Me-family active space; each circuit is transpiled (<code>optimization_level=1</code>) and run for
+A("""<p>Inference protocol (identical for both configurations): the policy draws <b>10</b> gate sequences (seed 1234) for an unseen SnOH<sub>3</sub>-Me-family active space; each circuit is transpiled (<code>optimization_level=1</code>) and run for
 <b>100,000 shots</b> on <code>ibm_kobe</code> (one Runtime job, no error mitigation). Each circuit is ranked by a one-shot diagonalization of its valid shots (net CI dimension 40,000); <i>best</i> and <i>second</i> are the two lowest ranking energies,
-<i>merged</i> pools the shots of every circuit with a finite ranking energy, and <i>E+D 1/2</i> are the two circuits of the earlier energy-plus-distinct-bitstring rule. Each is recovered with the configuration-recovery SQD loop (GPU, subspace 20,000, 25 iterations).
+<i>merged</i> pools the shots of every circuit with a finite ranking energy, and <i>E+D 1/2</i> are the two circuits chosen by the combined energy and distinct-bitstring rank. Each is recovered with the configuration-recovery SQD loop (GPU, 20,000 strings per spin sector, i.e. up to 4&times;10<sup>8</sup> determinants for the closed-shell product, 25 iterations).
 Error = recovered energy minus the DMRG energy of the molecule (bond dimension 4000), in mHa.</p>
 <p><b>Chemistry quantities</b> (from the measured bitstrings): <i>valid</i> = share of the 100,000 shots with the target alpha and beta electron numbers; <i>HF</i> = share of the valid shots that is exactly the Hartree-Fock determinant; <i>HL</i> = share of the valid shots with a HOMO&rarr;LUMO excitation;
 <i>alpha only / beta only / both</i> = share of the valid shots that excite only the alpha channel, only the beta channel, or both. Sequence statistics: fraction of identity (padding) tokens, number of Givens rotations and of HF-changing gates, share of Givens rotations on the HOMO-LUMO pair, operator-family counts.</p>""")
@@ -220,7 +224,7 @@ if SET == "t1":
     S2 = {"a1-46q": ["hw_continue_46q_a1_s1234_v4"], "a1-70q": ["kawasaki_hw_70q_a1_s1234_v5"], "a5-46q": ["hw_continue_46q_a5_s1234_v1", "hw_continue_46q_a5_s1234_v2", "hw_continue_46q_a5_s1234_v3"], "a5-70q": ["kawasaki_hw_70q_a5_s1234_v4"]}
     rows = []
     for lin in LINS:
-        row = [lin.upper()]
+        row = [(lin[:2].upper() + lin[2:])]
         for st in (S1, S2):
             h = []
             for f in st[lin]:
@@ -250,7 +254,7 @@ else:
         s1, s2 = tr_stats(h1), tr_stats(h2)
         tst[lin] = (s1, s2)
         q = QPU_T2[SET][lin]
-        rows.append([lin.upper(), s1["n"], f"{s1['gate'] * 100:.0f}", f"{s1['err_last10']:.1f}", f"{s1['depth_last10']:.0f}", f"{s1['wall_h']:.1f}",
+        rows.append([(lin[:2].upper() + lin[2:]), s1["n"], f"{s1['gate'] * 100:.0f}", f"{s1['err_last10']:.1f}", f"{s1['depth_last10']:.0f}", f"{s1['wall_h']:.1f}",
                      s2["n"], f"{s2['gate'] * 100:.0f}", f"{s2['err_last10']:.1f}", f"{s2['depth_last10']:.0f}", f"{s2['wall_h']:.1f}", f"{q[0]:.0f}", f"{q[1]:.1f}"])
     A(table(["Lineage", "S1 iters", "S1 gate %", "S1 raw err last10 (mHa)", "S1 depth last10", "S1 wall (h)", "S2 iters", "S2 gate %", "S2 raw err last10 (mHa)", "S2 depth last10", "S2 wall (h)", "QPU min (S2)", "QPU s/job"], rows))
     A("<p>Raw error is against the CASCI/CCSD(T) surrogate of the transition-metal training molecules, not DMRG; read it as relative. Stage 1 is the shared simulator stage. QPU time is IBM-billed time of the Stage-2 Runtime jobs (20 circuits x 10,000 shots each).</p>")
@@ -266,19 +270,19 @@ else:
                 if lab == "Stage 2":
                     y = [((r.get("track") or {}).get("exc_best") or {}).get(key) for r in hh]
                     ax[1][j].plot(it, y, color=c, lw=1.0, label=key.replace("valid_", ""))
-        ax[0][j].set_title(lin.upper()); ax[0][j].set_yscale("log"); ax[0][j].grid(alpha=.2)
+        ax[0][j].set_title((lin[:2].upper() + lin[2:])); ax[0][j].set_yscale("log"); ax[0][j].grid(alpha=.2)
         ax[1][j].grid(alpha=.2); ax[1][j].set_xlabel("iteration (Stage 2 shifted by 150)")
     ax[0][0].set_ylabel("effective vocabulary"); ax[1][0].set_ylabel("share of valid shots, best circuit")
     ax[0][0].legend(fontsize=7); ax[1][0].legend(fontsize=7)
     A("<h3>Policy collapse and chemistry during training</h3>" + b64fig(fig))
     A("<p>Top: effective vocabulary of the policy (exponential of the mean token entropy). Bottom: Stage-2 composition of the valid shots of the best circuit of each iteration (HF determinant share, alpha-only, beta-only). "
       + ("The HF-penalty policy has about one effective token from iteration ~50-55 of Stage 2 and its 46-qubit circuits are strongly beta-only." if SET == "hf" else
-         "The tuned policy keeps an effective vocabulary of about 20-27 tokens and balanced spin channels at the price of deeper 70-qubit circuits.") + "</p>")
+         "The tuned policy keeps an effective vocabulary of about 21-27 (exp of the mean token entropy) and balanced spin channels at the price of deeper 70-qubit circuits.") + "</p>")
     if SET == "tuned":
         A('<div class="note">A1-70q: the run ended by a segmentation fault at iteration 137; the policy used at inference was saved at iteration 129.</div>')
 
-# ------------------------------------------------------------------ master table
-A('<h2 id="summary">3. Master table: every planned run</h2>')
+# ------------------------------------------------------------------ summary table
+A('<h2 id="summary">3. Summary table: every planned run</h2>')
 A(f"<p>Energy (E<sub>h</sub>) / error against DMRG (mHa) of the <i>best</i> circuit, with depth and two-qubit gate count as submitted to <code>ibm_kobe</code>. Cells not yet available are red.</p>")
 rows = []
 byk = {(r["mol"], r["lineage"]): r for r in trained}
@@ -287,17 +291,17 @@ for mk in sorted(ALLMOL, key=lambda m: (LABEL[m][1], LABEL[m][2])):
         r = byk.get((mk, lin))
         if r is None:
             if mk in PLANNED[lin]:
-                rows.append([E(LABEL[mk][0]), lin.upper(), "only one circuit with valid shots: no best/second pair"] + ["&ndash;"] * 6)
+                rows.append([E(LABEL[mk][0]), (lin[:2].upper() + lin[2:]), "excluded: second draw also without a usable recovery (see the note at the top)"] + ["&ndash;"] * 6)
             continue
         t = r["t"]
         b, s, m_ = t["best"], t["second"], t["merged"]
         ce = lambda e: pend("recovery running") if not e["done"] else f"{e['err']:.2f}"
-        rows.append([E(LABEL[mk][0]), lin.upper(), f"{b['energy']:.6f}" if b["done"] else pend("running"), ce(b), ce(s), ce(m_), b["depth"], b["two_q"], b["valid_shots"]])
+        rows.append([E(LABEL[mk][0]), (lin[:2].upper() + lin[2:]), f"{b['energy']:.6f}" if b["done"] else pend("running"), ce(b), ce(s), ce(m_), b["depth"], b["two_q"], b["valid_shots"]])
 A(table(["Molecule", "Lineage", "Best E (Eh)", "Best err (mHa)", "Second err (mHa)", "Merged err (mHa)", "Depth", "2q gates", "Valid shots (best)"], rows))
 if untrained:
     A("<h3>Untrained controls (randomly initialised policies, independent of the training recipe)</h3>")
     A(table(["Molecule", "Lineage", "Best err (mHa)", "Second err (mHa)", "Depth", "2q gates"],
-            [[E(r["label"]), r["lineage"].upper(), fnum(r["t"]["best"].get("err"), 1), fnum(r["t"]["second"].get("err"), 1), r["t"]["best"]["depth"], r["t"]["best"]["two_q"]] for r in untrained]))
+            [[E(r["label"]), (r["lineage"][:2].upper() + r["lineage"][2:]), fnum(r["t"]["best"].get("err"), 1), fnum(r["t"]["second"].get("err"), 1), r["t"]["best"]["depth"], r["t"]["best"]["two_q"]] for r in untrained]))
 fin = [r["t"]["best"]["err"] for r in trained if r["t"]["best"]["done"]]
 if fin:
     e = np.array(fin)
@@ -320,7 +324,7 @@ for r in trained:
         agg[r["lineage"]][k].append(e.get(k))
     for k in ("frac_identity", "n_hf_changing_gates", "frac_givens_homo_lumo", "n_givens"):
         agg[r["lineage"]][k].append(s.get(k))
-    rows.append([E(r["label"]), r["lineage"].upper()] + [pct(e.get(k)) for k, _ in keys] + [fnum(s.get("frac_identity"), 2), s.get("n_givens", "&ndash;"), s.get("n_lucj", "&ndash;") if s else "&ndash;",
+    rows.append([E(r["label"]), (r["lineage"][:2].upper() + r["lineage"][2:])] + [pct(e.get(k)) for k, _ in keys] + [fnum(s.get("frac_identity"), 2), s.get("n_givens", "&ndash;"), s.get("n_lucj", "&ndash;") if s else "&ndash;",
                  s.get("n_orb_rot", "&ndash;"), s.get("n_diag_coulomb", "&ndash;"), s.get("n_num_num", "&ndash;"), s.get("n_hf_changing_gates", "&ndash;"), fnum(s.get("frac_givens_homo_lumo"), 2)])
 A("<h3>Best circuit of every finished run</h3>")
 A(table(["Molecule", "Lineage"] + [k[1] for k in keys] + ["identity frac", "Givens", "LUCJ", "orb_rot", "diag_coulomb", "num_num", "HF-changing gates", "Givens on HOMO-LUMO"], rows))
@@ -329,7 +333,7 @@ if SET != "t1":
     for r in trained:
         d_ = data[r["tag"]]["circuits"]
         ex = [c.get("exc_stats") or {} for c in d_]
-        rowsm.append([E(r["label"]), r["lineage"].upper(), pct(float(np.mean([x.get("frac_valid", 0) for x in ex]))), pct(med([x.get("valid_hf") for x in ex if x.get("frac_valid", 0) > 0])),
+        rowsm.append([E(r["label"]), (r["lineage"][:2].upper() + r["lineage"][2:]), pct(float(np.mean([x.get("frac_valid", 0) for x in ex]))), pct(med([x.get("valid_hf") for x in ex if x.get("frac_valid", 0) > 0])),
                       pct(med([x.get("valid_beta_only") for x in ex if x.get("frac_valid", 0) > 0])), pct(med([x.get("valid_alpha_only") for x in ex if x.get("frac_valid", 0) > 0])),
                       int(sum(1 for x in ex if x.get("frac_valid", 0) > 0)), f"{med([c.get('depth_live') for c in d_]):.0f}"])
     A("<h3>All ten circuits of every finished run (mean/median over the circuits that have valid shots)</h3>")
@@ -340,11 +344,11 @@ w = 0.12
 labs = [k[1].replace("&alpha;", "a").replace("&beta;", "b") for k in keys]
 for i, lin in enumerate(LINS):
     vals = [100 * (med(agg[lin][k]) or 0) for k, _ in keys] if agg[lin][keys[0][0]] else [0] * len(keys)
-    ax[0].bar(np.arange(len(keys)) + (i - 1.5) * 0.2, vals, 0.2, label=lin.upper())
+    ax[0].bar(np.arange(len(keys)) + (i - 1.5) * 0.2, vals, 0.2, label=(lin[:2].upper() + lin[2:]))
 ax[0].set_xticks(range(len(keys))); ax[0].set_xticklabels(labs, fontsize=8); ax[0].legend(fontsize=7); ax[0].set_title("median over finished runs, best circuit (%)"); ax[0].grid(alpha=.2)
 for i, lin in enumerate(LINS):
     ax[1].bar(i, 100 * (med(agg[lin]["frac_identity"]) or 0), 0.5)
-ax[1].set_xticks(range(4)); ax[1].set_xticklabels([l.upper() for l in LINS]); ax[1].set_title("identity (padding) tokens in the best circuit's sequence (%)"); ax[1].grid(alpha=.2)
+ax[1].set_xticks(range(4)); ax[1].set_xticklabels([(l[:2].upper() + l[2:]) for l in LINS]); ax[1].set_title("identity (padding) tokens in the best circuit's sequence (%)"); ax[1].grid(alpha=.2)
 A("<h3>Median over the finished runs, by lineage</h3>" + b64fig(fig))
 A('<p>Aggregates are medians over the runs that have a result.</p>')
 
@@ -352,7 +356,7 @@ A('<p>Aggregates are medians over the runs that have a result.</p>')
 A('<h2 id="tvi">5. Training chemistry against inference chemistry</h2>')
 if SET == "t1":
     A('<div class="note warn"><b>Not available for Training 1.</b> Training 1 logged no per-iteration chemistry (no tracking), so there is no training-time curve to correlate with the inference chemistry of section 4. '
-      'The same comparison for the two Training 2 sets is in <code>report_hf_penalty.html</code> and <code>report_tuned_reward.html</code>.</div>')
+      'The same comparison for the two configurations is in <code>report_hf_penalty.html</code> and <code>report_tuned_reward.html</code>.</div>')
 else:
     A("<p>Left block: the last 20 iterations of Stage 2 of the training run, best circuit of each iteration (<code>track.exc_best</code>, <code>track.seq_best</code>) and the mean over the 20 circuits sampled per iteration. "
       "Right block: the same quantities for the zero-shot circuits on the unseen molecules (median over the finished runs of the lineage: best circuit and mean over the ten circuits of a run). "
@@ -374,14 +378,14 @@ else:
             inf_mean[k] = med(xs)
         sq = {k: med([best_chem(r)[1].get(k) for r in rl]) for k in ("frac_identity", "n_hf_changing_gates", "frac_givens_homo_lumo")}
         for lab, tv, iv in (("best circuit", s2["best"], inf_best), ("mean over circuits", s2["mean"], inf_mean)):
-            rows.append([lin.upper(), lab] + [pct(tv[k]) for k in ck] + ["|"] + [pct(iv[k]) if iv[k] is not None else pend("&ndash;") for k in ck] + [len(rl)])
-        rows.append([lin.upper(), "sequence (best)", f"eff. vocab {s2['eff_vocab']:.2f}", f"identity {s2['seq']['frac_identity']:.2f}", f"HF-chg gates {s2['seq']['n_hf_changing_gates']:.1f}",
+            rows.append([(lin[:2].upper() + lin[2:]), lab] + [pct(tv[k]) for k in ck] + ["|"] + [pct(iv[k]) if iv[k] is not None else pend("&ndash;") for k in ck] + [len(rl)])
+        rows.append([(lin[:2].upper() + lin[2:]), "sequence (best)", f"eff. vocab {s2['eff_vocab']:.2f}", f"identity {s2['seq']['frac_identity']:.2f}", f"HF-chg gates {s2['seq']['n_hf_changing_gates']:.1f}",
                      f"Givens HL {s2['seq']['frac_givens_homo_lumo']:.2f}", "", "", "|", f"identity {fnum(sq['frac_identity'], 2)}", f"HF-chg gates {fnum(sq['n_hf_changing_gates'], 1)}",
                      f"Givens HL {fnum(sq['frac_givens_homo_lumo'], 2)}", "", "", "", len(rl)])
         x = np.arange(len(ck))
         ax[j].bar(x - 0.2, [100 * (s2["best"][k] or 0) for k in ck], 0.4, label="training (Stage 2, last 20 it.)")
         ax[j].bar(x + 0.2, [100 * (inf_best[k] or 0) for k in ck], 0.4, label="inference (median over runs)")
-        ax[j].set_xticks(x); ax[j].set_xticklabels(cl, fontsize=8); ax[j].set_title(lin.upper()); ax[j].grid(alpha=.2)
+        ax[j].set_xticks(x); ax[j].set_xticklabels(cl, fontsize=8); ax[j].set_title((lin[:2].upper() + lin[2:])); ax[j].grid(alpha=.2)
     ax[0].set_ylabel("% (valid: of 10,000/100,000 shots; others: of valid shots)"); ax[0].legend(fontsize=7)
     A(table(["Lineage", "quantity"] + [c + " % (train)" for c in cl] + [""] + [c + " % (infer)" for c in cl] + ["runs"], rows))
     A("<h3>Best circuit: training against inference</h3>" + b64fig(fig))
@@ -389,15 +393,15 @@ else:
         "In training the HF-penalty policy has collapsed onto about one effective token, a small right-spin-sector share and almost no HF weight, with the 46-qubit circuits strongly beta-only. The zero-shot circuits on the unseen molecules are drawn from the same policy, but the shots of the selected best circuit "
         "keep a much larger HF share and a larger valid share than in training; the beta-only dominance of the 46-qubit policies reappears or weakens depending on the molecule (see the per-run table). The HF penalty therefore reshapes the spin balance of the circuits more than it removes HF weight on the unseen molecules."
         if SET == "hf" else
-        "The tuned policy keeps an effective vocabulary of 20-27 tokens and balanced spin channels in training (small HF share, near-zero alpha/beta asymmetry). At inference, compare its valid and HF shares with the HF-penalty report: the tuned circuits have the lowest HF share of the three sets but do not recover closer to DMRG.") +
+        "The tuned policy keeps an effective vocabulary of 21-27 and balanced spin channels in training (small HF share, near-zero alpha/beta asymmetry). At inference, compare its valid and HF shares with the HF-penalty report: the tuned circuits have the lowest HF share of the three sets but do not recover closer to DMRG.") +
         " Differences are descriptive; no ablation separates molecule class from recipe.</p>")
 
 # ------------------------------------------------------------------ three way
-A('<h2 id="threeway">6. Three-way comparison (cells in which all three sets are finished)</h2>')
+A('<h2 id="threeway">6. Hartree-Fock penalty against tuned reward (test cases in which both configurations are finished)</h2>')
 try:
-    R = pickle.load(open("/tmp/inf/R3.pkl", "rb"))
-    cells = sorted([k for k, v in R.items() if {"T1", "HF", "tuned"} <= set(v)], key=lambda k: (ALLMOL.index(k[0]), k[1]))
-    SETN = [("T1", "Training 1"), ("HF", "HF penalty"), ("tuned", "tuned reward")]
+    R = pickle.load(open(REPO / "data" / "R3.pkl", "rb"))
+    cells = sorted([k for k, v in R.items() if {"HF", "tuned"} <= set(v)], key=lambda k: (ALLMOL.index(k[0]), k[1]))
+    SETN = [("HF", "HF penalty"), ("tuned", "tuned reward")]
     rows = []
     for s_, lab in SETN:
         b = [R[k][s_]["best"] for k in cells]
@@ -405,21 +409,21 @@ try:
         mn = [min(x["err"], y["err"]) for x, y in zip(b, c2)]
         rows.append([("<b>" + lab + "</b>") if {"t1": "T1", "hf": "HF", "tuned": "tuned"}[SET] == s_ else lab, len(cells), fnum(med([x["err"] for x in b]), 2), fnum(float(np.mean([x["err"] for x in b])), 1),
                      fnum(med([x["err"] for x in c2]), 2), fnum(med(mn), 2), f"{med([x['depth'] for x in b]):.0f}"] + [pct(med([x[q] for x in b])) for q in ("valid", "hf", "hl", "a", "b", "both")])
-    A(table(["Set", "cells", "best err median (mHa)", "best err mean (mHa)", "2nd err median", "min(best,2nd) median", "depth (best)", "valid %", "HF %", "HL %", "&alpha; only %", "&beta; only %", "both %"], rows))
-    A(f'<p>{len(cells)} cells (molecule x lineage) were run in all three sets: the 24 of the first campaign and the 8 on SnOH3-me M and SnOH3-me-h2o L. Differences of 0.1-1 mHa in the median are below the spread between runs and are not a ranking (one training seed per set).</p>')
+    A(table(["Set", "test cases", "best &Delta;E median (mHa)", "best &Delta;E mean (mHa)", "2nd &Delta;E median", "min(best,2nd) median", "depth (best)", "valid %", "HF %", "HL %", "&alpha; only %", "&beta; only %", "both %"], rows))
+    A(f'<p>{len(cells)} test cases (molecule x lineage) were run in both configurations. Differences of 0.1-1 mHa in the median are below the spread between runs and are not a ranking (one training seed per configuration).</p>')
     rows = []
     for k in cells:
-        row = [E(LABEL[k[0]][0]), k[1].upper()]
+        row = [E(LABEL[k[0]][0]), (k[1][:2].upper() + k[1][2:])]
         for s_, _ in SETN:
             b, c2 = R[k][s_]["best"], R[k][s_]["second"]
             row += [f"{b['err']:.2f}", f"{c2['err']:.2f}", b["depth"], pct(b["valid"]), pct(b["hf"]), f"{pct(b['a'])}/{pct(b['b'])}/{pct(b['both'])}"]
         rows.append(row)
     hdr = ["Molecule", "Lineage"]
     for _, lab in SETN:
-        hdr += [f"{lab}: best err", "2nd err", "depth", "valid %", "HF %", "a/b/both %"]
-    A("<details><summary>Per-cell table</summary>" + table(hdr, rows) + "</details>")
+        hdr += [f"{lab}: best &Delta;E", "2nd &Delta;E", "depth", "valid %", "HF %", "a/b/both %"]
+    A("<details><summary>Table per test case</summary>" + table(hdr, rows) + "</details>")
 except Exception as ex:  # noqa: BLE001
-    A(f'<p class="pend">Three-way data not available ({E(str(ex))}).</p>')
+    A(f'<p class="pend">Comparison data not available ({E(str(ex))}).</p>')
 
 # ------------------------------------------------------------------ timing
 A('<h2 id="timing">7. Timing and cost of the inference campaign</h2>')
@@ -442,7 +446,7 @@ for k, lab in names.items():
     bad = [x for x in v if x["state"] != "COMPLETED"]
     if v:
         rows.append([lab, len(ok), f"{sum(ok) / 3600:.1f}", f"{np.mean(ok) / 60:.0f}" if ok else "&ndash;", len(bad)])
-A(table(["Stage (Slurm jobs of this set)", "completed jobs", "wall (h)", "mean per job (min)", "failed/cancelled/timed out"], rows))
+A(table(["Stage", "completed jobs", "wall (h)", "mean per job (min)", "failed/cancelled/timed out"], rows))
 if SET == "t1":
     A("<p>Training-1 inference: 32 runs, 320 circuits, 32,000,000 shots, 285 QPU minutes (534 s per job) for the fresh-shot campaign; the QPU time of the first campaign and LUCJ jobs is in the manuscript.</p>")
 else:
@@ -451,13 +455,12 @@ else:
         qj = json.loads(qf.read_text())
         qs = [v["quantum_seconds"] for k, v in qj["per_run"].items() if not k.endswith("untrained") and v["quantum_seconds"] is not None]
         A(f"<p><b>Billed QPU time of the inference sampling jobs (IBM job records):</b> {len(qs)} trained-run jobs, {sum(qs):,.0f} s ({sum(qs) / 60:.1f} min), "
-          f"{np.mean(qs):.0f} s per job (range {min(qs)}&ndash;{max(qs)} s); each run is 10 circuits x 100,000 shots = 1,000,000 shots, one Runtime job. "
-          f"Per-run values are in the data folder (<code>qpu_fresh.json</code>). The untrained-control jobs in the same file belong to the Training-1 campaign.</p>")
+          f"{np.mean(qs):.0f} s per job (range {min(qs)}&ndash;{max(qs)} s); each run is 10 circuits x 100,000 shots = 1,000,000 shots, one Runtime job.</p>")
         if len(qs) < NPLAN:
             A(f'<p><span class="pend">{NPLAN - len(qs)} of the {NPLAN} planned runs are not measured yet; their QPU time is added when they finish.</span></p>')
     else:
         A(f'<p><span class="pend">QPU seconds of this set\'s inference jobs have not been queried yet</span> ({nmeas} runs measured of {NPLAN}; each run is 10 circuits x 100,000 shots = 1,000,000 shots, one Runtime job); {NOTE}. </p>')
-    A("<p>Slurm times above are only for the jobs that already finished and are listed in the job table; the ranking jobs (rr_) do not carry a Slurm id in the stored files and are not listed.</p>")
+    A("<p>Wall times are those of the compute jobs that had finished when the data were collected; the ranking jobs are not listed individually.</p>")
 
 # ---- three-set inference timing (same numbers as the manuscript table, from inference_timing.py)
 import importlib.util as _ilu
@@ -471,14 +474,30 @@ for _lab, _tree, _fn, _plan in _it.SETS:
     _c = (lambda t: t) if _done else (lambda t: pend(t))
     _rows.append([_lab, len(_g["sample"]), f"{sum(_g['sample']) / 3600:.1f}", f"{sum(_g['rank']) / 3600:.1f}", _c(f"{len(_rec)}"), _c(f"{sum(_rec) / 3600:.1f}"), _c(f"{2 * sum(_rec) / 3600:.1f}"),
                   f"{_q[0]:,.0f} s ({_q[0] / 60:.0f} min), {_q[0] / max(_q[1], 1):.0f} s/job" if _q and _q[0] is not None else pend("not retrieved")])
-A("<h3>The three model sets side by side</h3>" + table(["set", "sampling jobs", "sampling wall (h)", "ranking wall (h)", "recoveries", "recovery wall (h)", "recovery GPU-h", "IBM-billed QPU time (sampling)"], _rows))
-A("<p>Trained runs only (Training 1: its 24 original runs). Red: the set is not finished (recoveries still running or queued); regenerate with <code>refresh_all.sh</code>.</p>")
-A(f"<p>Training wall time and QPU time of this set are in section 2. Calibration of <code>ibm_kobe</code> during the experiments is copied unchanged in the Training-1 report.</p>")
+A("<h3>The two configurations side by side</h3>" + table(["set", "sampling jobs", "sampling wall (h)", "ranking wall (h)", "recoveries", "recovery wall (h)", "recovery GPU-h", "IBM-billed QPU time (sampling)"], _rows))
+A("<p>Trained runs only. Red: the set is not finished (recoveries still running or queued); regenerate with <code>refresh_all.sh</code>.</p>")
+A(f"<p>Training wall time and QPU time of this set are in section 2. Calibration of <code>ibm_kobe</code> during the experiments is given in the manuscript appendix.</p>")
 
 
 # ------------------------------------------------------------------ ideal divergence from the LUCJ circuit
 DIVDIR = REPO / TREE / "divergence"
 MOLNQ = {r['tag']: r['nq'] for r in runs}
+def vocab_of(mol):
+    p = REPO / TREE / "vocab" / f"vocab_{mol}.json"
+    return json.loads(p.read_text())["names"] if p.exists() else None
+
+
+def decode_seq(seq, names):
+    """token -> operator, with the rotation angle where the operator has one; identity padding is shown as '.'"""
+    if not names:
+        return " ".join(str(t) for t in seq)
+    out = []
+    for t in seq:
+        n = names[t] if 0 <= t < len(names) else "I"
+        out.append("." if n == "I" else f"{t}:{n}")
+    return " ".join(out)
+
+
 def div_load(tag):
     f = DIVDIR / f"{tag}.json"
     if not f.exists():
@@ -494,7 +513,7 @@ A("<p>For every generated circuit the ideal (noiseless) state U<sub>g</sub>|HF&g
   "<b>F</b> = |&lt;&psi;<sub>g</sub>|&phi;&gt;|&sup2; is the state fidelity (Jozsa 1994; Nielsen &amp; Chuang 2010); <b>H</b> = &radic;(1 &minus; BC) is the Hellinger distance (Hellinger 1909) with BC = &Sigma;&radic;(pq) the Bhattacharyya coefficient (Bhattacharyya 1943) "
   "of the determinant distributions p = |&psi;<sub>g</sub>|&sup2;, q = |&phi;|&sup2;; <b>JS</b> is the Jensen&ndash;Shannon divergence in bits (Lin 1991), which is bounded and finite for disjoint supports, which is why the Kullback&ndash;Leibler divergence is not used (it is infinite when the supports differ); "
   "<b>d<sub>HF</sub></b> = &radic;(2 &minus; 2|&lt;&psi;<sub>g</sub>|&phi;&gt;|) is the distance of the two states up to a global phase, a lower bound of the operator distance between the circuits; "
-  "<b>op-norm LB</b> is a lower bound of the operator norm &#8741;U<sub>g</sub> &minus; U<sub>LUCJ</sub>&#8741; (maximum 2) from a Lanczos iteration with exact inverses of every pool operator (Lanczos 1950), computed only for the best and second circuit of the 16-orbital tier. "
+  "<b>op-norm LB</b> (<i>not</i> minimised over a global phase, so it overstates the distance and is not used as evidence; 2.00 is a non-converged run) is a lower bound of the operator norm &#8741;U<sub>g</sub> &minus; U<sub>LUCJ</sub>&#8741; (maximum 2) from a Lanczos iteration with exact inverses of every pool operator (Lanczos 1950), computed only for the best and second circuit of the 16-orbital tier. "
   "Only tiers whose full N-electron vector fits in memory (SnOH3-me S, SnOH3-me-h2o S and SnOH3-me-2h2o S: 16, 19 and 22 orbitals, up to 44 qubits) are computed; larger tiers and SnOH3-me M (38 qubits, 12+12 electrons in 19 orbitals: 2.5&times;10<sup>9</sup> determinants, 41 GB per state vector) are n/a. The ideal state is not what the hardware samples: noise spreads the measured shots over excited determinants (see the manuscript).</p>")
 drows = []
 for r in runs:
@@ -505,7 +524,7 @@ for r in runs:
     for role, idx in (("best", sel["best"]), ("2nd", sel["second"])):
         c = dv.get(idx)
         if c:
-            drows.append([E(r["label"]), r["lineage"].upper(), role, dfmt(c["F"]), dfmt(c["H"]), dfmt(c["JS"]), dfmt(c["d_HF"]), dfmt(c.get("op_norm"), 2) if c.get("op_norm") is not None else "&ndash;"])
+            drows.append([E(r["label"]), (r["lineage"][:2].upper() + r["lineage"][2:]), role, dfmt(c["F"]), dfmt(c["H"]), dfmt(c["JS"]), dfmt(c["d_HF"]), dfmt(c.get("op_norm"), 2) if c.get("op_norm") is not None else "&ndash;"])
 if drows:
     A(table(["target", "lineage", "circuit", "F", "H", "JS", "d_HF", "op-norm LB"], drows))
 else:
@@ -514,27 +533,52 @@ else:
 # ------------------------------------------------------------------ per-run detail
 
 A('<h2 id="runs">8. Per-run detail</h2>')
+A("<p>Token sequences are listed in the order the circuit applies them, as <code>token:operator</code>. <code>I</code> (shown as a dot) is the identity (padding, no gate). "
+  "<code>givens(p,q;&theta;)</code> is a Givens rotation (single-excitation orbital rotation) between neighbouring spatial orbitals p and q with angle &theta; in radians. "
+  "<code>num_num(p,q)</code> is a number&ndash;number interaction between orbitals p and q. <code>diag_coulomb(t=&tau;)</code> is a diagonal-Coulomb layer on all orbitals with time &tau;. "
+  "<code>orb_rot[k]</code> is one of four fixed (seeded) orbital rotations acting on every orbital. <code>LUCJ(reps=2)</code> is the local unitary cluster Jastrow layer built from the CCSD amplitudes. "
+  "The operator that a token index denotes and its angle depend on the molecule (they come from its CCSD amplitudes), so the table is decoded with the vocabulary of each run's molecule. "
+  "Labels in the second column: best / 2nd = the two lowest ranking energies; E+D 1st / E+D 2nd = the two circuits chosen by the combined energy and distinct-bitstring rank.</p>")
+# token map of the operator pool: formula for n orbitals, checked against the stored vocabulary of every molecule in this set
+def _token_map():
+    rows, bad = [], []
+    for mol in sorted({r["mol"] for r in runs}, key=lambda m: (json.loads((REPO / TREE / "vocab" / f"vocab_{m}.json").read_text())["norb"], m)):
+        v = json.loads((REPO / TREE / "vocab" / f"vocab_{mol}.json").read_text()); n, nm = v["norb"], v["names"]
+        ok = (v["n_real"] == 3 * n + 5 and nm[0] == "I" and nm[1].startswith("LUCJ") and all(nm[2 + k] == f"orb_rot[{k}]" for k in range(4))
+              and all(nm[6 + 2 * p].startswith(f"givens({p},{p+1};") and nm[7 + 2 * p].startswith(f"givens({p},{p+1};") for p in range(n - 1))
+              and nm[2 * n + 4].startswith("diag_coulomb") and nm[2 * n + 5].startswith("diag_coulomb")
+              and all(nm[2 * n + 6 + p] == f"num_num({p},{p+1})" for p in range(n - 1)) and all(x == "I" for x in nm[3 * n + 5:]))
+        if not ok:
+            bad.append(mol)
+        rows.append([E(mol), n, f"6&ndash;{2*n+3}", f"{2*n+4}, {2*n+5}", f"{2*n+6}&ndash;{3*n+4}", v["n_real"], f"{3*n+5}&ndash;{len(nm)-1}" if len(nm) > 3 * n + 5 else "&ndash;"])
+    return rows, bad
+_tm, _bad = _token_map()
+A("<h4>Token map of the operator pool</h4><p>For a molecule with n spatial orbitals the token ids are: <code>0</code> identity; <code>1</code> LUCJ layer (2 repetitions); <code>2&ndash;5</code> the four fixed orbital rotations <code>orb_rot[0..3]</code>; "
+  "<code>6&ndash;2n+3</code> the Givens rotations <code>givens(p,p+1;&theta;)</code> for p = 0..n&minus;2, two angles each (token 6+2p and 7+2p); <code>2n+4, 2n+5</code> the two diagonal-Coulomb layers; <code>2n+6&ndash;3n+4</code> the number&ndash;number gates "
+  "<code>num_num(p,p+1)</code>; the pool has 3n+5 operators and every larger id up to 109 is identity padding. The ranges below were read from the stored vocabulary of each molecule and checked against this formula"
+  + (" (all agree)." if not _bad else f" (<b>mismatch for {', '.join(_bad)}</b>).") + "</p>")
+A(table(["molecule", "n orbitals", "Givens", "diag-Coulomb", "num-num", "pool size 3n+5", "identity padding"], _tm))
 for r in runs:
     tag = r["tag"]
     rk = {c["index"]: c for c in rerank[tag]["circuits"]}
     sel = r["sel"]
-    A(f'<details id="{E(tag)}"><summary>{E(r["label"])} &mdash; {r["lineage"].upper()} {r["policy"]}</summary>')
+    A(f'<details id="{E(tag)}"><summary>{E(r["label"])} &mdash; {(r["lineage"][:2].upper() + r["lineage"][2:])} {r["policy"]}</summary>')
     A(f"<p class=\"mut\">DMRG reference {DMRG[r['mol']]:.9f} Eh. Hardware job ids: {E(', '.join(data[tag].get('ibm_runtime_job_ids') or []))}. Selected: best = circuit {sel['best'] + 1}, second = {sel['second'] + 1}, "
-      f"merged = {', '.join(str(i + 1) for i in sel['merged'])}.</p>")
+      f"merged = {', '.join(str(i + 1) for i in sel['merged'])}; E+D 1st = circuit {sel['old_best'] + 1}, E+D 2nd = circuit {sel['old_second'] + 1}.</p>" if sel.get('old_best') is not None and sel.get('old_second') is not None else f"merged = {', '.join(str(i + 1) for i in sel['merged'])}.</p>")
     crow = []
     for c in data[tag]["circuits"]:
         rr_ = rk.get(c["index"], {})
         e, s, hf, imb = circ_chem(tag, c["index"])
         e = e or {}
-        mark = ("best " if c["index"] == sel["best"] else "") + ("2nd" if c["index"] == sel["second"] else "")
+        mark = " ".join(x for x, ok in (("best", c["index"] == sel["best"]), ("2nd", c["index"] == sel["second"]), ("E+D 1st", c["index"] == sel.get("old_best")), ("E+D 2nd", c["index"] == sel.get("old_second"))) if ok)
         dv = (div_load(tag) or {}).get(c["index"])
         dcols = ([dfmt(dv["F"]), dfmt(dv["H"]), dfmt(dv["JS"]), dfmt(dv["d_HF"]), dfmt(dv.get("op_norm"), 2) if dv.get("op_norm") is not None else "&ndash;"]
                  if dv else [DIV_NA if (MOLNQ[tag] > 44 or tag.startswith("sno38_")) else pend("not computed")] * 5)
-        crow.append([c["index"] + 1, mark, c.get("depth_live"), c.get("two_qubit_live"), rr_.get("valid_shots"), fnum(rr_.get("energy_40000"), 5) if rr_.get("energy_40000") is not None else "&ndash;",
+        crow.append([c["index"] + 1, mark, "<code>" + E(decode_seq(c.get("seq", []), vocab_of(r["mol"]))) + "</code>", c.get("depth_live"), c.get("two_qubit_live"), rr_.get("valid_shots"), fnum(rr_.get("energy_40000"), 5) if rr_.get("energy_40000") is not None else "&ndash;",
                      pct(e.get("frac_valid")) if e else "&ndash;", pct(e.get("valid_hf")) if e else "&ndash;", pct(e.get("valid_homo_lumo_any")) if e else "&ndash;",
                      "/".join(pct(e.get(k)) for k in ("valid_alpha_only", "valid_beta_only", "valid_alpha_and_beta")) if e else "&ndash;",
                      fnum(s.get("frac_identity"), 2) if s else "&ndash;", s.get("n_givens", "&ndash;") if s else "&ndash;", s.get("n_hf_changing_gates", "&ndash;") if s else "&ndash;"] + dcols)
-    A("<h4>The ten circuits</h4>" + table(["#", "", "depth", "2q", "valid shots", "ranking E (Eh)", "valid %", "HF %", "HL %", "a/b/both %", "identity frac", "Givens", "HF-chg gates", "fidelity F", "Hellinger H", "JS (bits)", "d_HF", "op-norm LB"], crow))
+    A("<h4>The ten circuits</h4>" + table(["#", "", "token sequence", "depth", "2q", "valid shots", "ranking E (Eh)", "valid %", "HF %", "HL %", "a/b/both %", "identity frac", "Givens", "HF-chg gates", "fidelity F", "Hellinger H", "JS (bits)", "d_HF", "op-norm LB"], crow))
     rrows = []
     for tg in ("best", "second", "merged", "oldbest", "oldsecond"):
         en = r["t"][tg]
@@ -546,7 +590,6 @@ for r in runs:
     A("</details>")
 
 # ------------------------------------------------------------------ raw
-A('<h2 id="raw">9. Raw data</h2>')
 dd = OUTDIR / f"report_{NAMES[SET]}_data"
 dd.mkdir(parents=True, exist_ok=True)
 for r in runs:
@@ -564,10 +607,6 @@ with open(dd / "summary_best_circuit.csv", "w", newline="") as f:
         e = e or {}
         w.writerow([r["tag"], r["label"], r["lineage"], r["policy"], b.get("energy", ""), b.get("err", ""), s.get("err", ""), m_.get("err", ""), b["depth"], b["two_q"], b["valid_shots"],
                     e.get("frac_valid", ""), e.get("valid_hf", ""), e.get("valid_homo_lumo_any", ""), e.get("valid_alpha_only", ""), e.get("valid_beta_only", ""), e.get("valid_alpha_and_beta", "")])
-A(f'<p>Per-run JSON (circuits with sequences, shot-level chemistry, ranking and recovery results; the recovered alpha strings are omitted) and a CSV in <code>report_{NAMES[SET]}_data/</code> next to this file: '
-  f'<a href="report_{NAMES[SET]}_data/summary_best_circuit.csv">summary_best_circuit.csv</a>; '
-  + ", ".join(f'<a href="report_{NAMES[SET]}_data/{E(r["tag"])}.json">{E(r["tag"])}</a>' for r in runs) + '. Complete counts and the transpiled circuits stay in the Zenodo archive of the first campaign; those of this set are on the cluster '
-  f'(<code>experiments/inference_{"t1" if SET == "t1" else SET}/circuit_analysis_ibm_jobs</code>) (the circuit archive and raw counts are in the deposit).</p>')
 A("</main></body></html>")
 OUTDIR.mkdir(exist_ok=True)
 path = OUTDIR / f"report_{NAMES[SET]}.html"

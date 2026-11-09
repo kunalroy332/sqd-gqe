@@ -38,7 +38,8 @@ T2 = f"{EXP}/training2"
 GPU_BIN = "/path/to/qcsc-prefect/algorithms/sbd/native/diag-gpu-mpi"
 SHOTS = 100_000
 SEED = 1234
-ARMS = {"hf": ("t2p_s2", "inference_hf"), "tuned": ("t2t_s2", "inference_tuned"), "t1": (None, "inference_t1")}
+ARMS = {"hf": ("t2p_s2", "inference_hf"), "tuned": ("t2t_s2", "inference_tuned"), "t1": (None, "inference_t1"),
+        "hf_seed2": ("t2p_s2", "inference_hf_seed2"), "tuned_seed2": ("t2t_s2", "inference_tuned_seed2")}   # *_seed2: a second draw of the 10 sequences (--seed), kept apart from the main trees
 ENC = {"a1": "a1_xattn_large_bounded", "a5": "a5_large_bounded"}
 NGATES = {"46q": 28, "70q": 44}
 
@@ -87,6 +88,7 @@ def main():
     ap.add_argument("--arm", choices=list(ARMS))
     ap.add_argument("--lineage", choices=list(TARGETS))
     ap.add_argument("--molecule-key", choices=list(M))
+    ap.add_argument("--seed", type=int, default=SEED, help="seed of the sequence draw (default 1234, the main campaign)")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--dry", action="store_true", help="print the plan and check the checkpoint, write nothing")
     a = ap.parse_args()
@@ -123,7 +125,7 @@ def main():
     # sequences_only=True returns right after the policy has drawn its 10 sequences, before any sampler call (no ffsim, no hardware, no diagonalization).
     # The policy, conditioning, seed and settings are those of the hardware run, so the sequences are the draw that run would have measured.
     _run_molecule_impl(
-        path, backend="ideal", checkpoint=ckpt, adapt_iters=0, seed=SEED, zeroshot_batches=1, diag_backend="sbd", sbd_binary_path=GPU_BIN,
+        path, backend="ideal", checkpoint=ckpt, adapt_iters=0, seed=a.seed, zeroshot_batches=1, diag_backend="sbd", sbd_binary_path=GPU_BIN,
         sbd_launcher=["mpirun", "-np", "2"], sbd_solver_kwargs={"task_comm_size": 1, "adet_comm_size": 1, "bdet_comm_size": 2},
         recover=False, sampler_kind="ffsim", shots=1000, max_depth_for_diag=False, ngates=real_ngates, refine_method="tp_ufd",
         encoder_override=None, sequences_only=True, _factory_holder=holder)
@@ -135,7 +137,7 @@ def main():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     cache = {
         "molecule_key": a.molecule_key, "molecule_path": path, "molecule_label": label, "lineage": a.lineage, "policy_mode": "trained",
-        "checkpoint": ckpt, "n_qubits": nq, "ngates": real_ngates, "shots": SHOTS, "seed": SEED, "max_depth_for_diag": 50000,
+        "checkpoint": ckpt, "n_qubits": nq, "ngates": real_ngates, "shots": SHOTS, "seed": a.seed, "max_depth_for_diag": 50000,
         "nelec": nelec, "norb": norb, "arm": a.arm,
         "batch_summary": [{"seq": s, "energy": None, "n_distinct": None, "depth_skipped": False, "cost": {}} for s in seqs],
         "best": {"seq": seqs[0], "raw_energy": None, "cost": {}, "counts": {}},
