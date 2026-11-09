@@ -1,0 +1,52 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the accompanying paper."
+title: "sqd-gqe"
+type: software
+license: Apache-2.0
+repository-code: "https://github.com/kunalroy332/sqd-gqe"
+abstract: >-
+  Sample-based quantum diagonalization (SQD) with a generative quantum eigensolver (GQE) policy that designs the
+  state-preparation circuits, trained with an IBM quantum processor in the loop.
+authors:
+  - family-names: Kumar
+    given-names: Kunal
+  - family-names: Keithley
+    given-names: Kimberlee
+  - family-names: Hamamura
+    given-names: Ikko
+preferred-citation:
+  type: article
+  title: "A Hardware-Trained Generative Quantum Eigensolver for Sample-Based Quantum Diagonalization of Organotin Hydroxides up to 70 Qubits"
+  authors:
+    - family-names: Kumar
+      given-names: Kunal
+    - family-names: Keithley
+      given-names: Kimberlee
+    - family-names: Iwamori
+      given-names: Toshiya
+    - family-names: Kanno
+      given-names: Shu
+    - family-names: Hamamura
+      given-names: Ikko
+    - family-names: Kobayashi
+      given-names: Takao
+    - family-names: Koseki
+      given-names: Akira
+    - family-names: Gao
+      given-names: Qi
+    - family-names: Yamamoto
+      given-names: Naoki
+    - family-names: Horii
+      given-names: Hiroshi
+    - family-names: Kobayashi
+      given-names: Yuri
+    - family-names: Peropadre
+      given-names: Borja
+    - family-names: Nakaji
+      given-names: Kouhei
+    - family-names: Imai
+      given-names: Toru
+    - family-names: Osogami
+      given-names: Takayuki
+  year: 2026
+  notes: "Manuscript in preparation; the DOI or arXiv identifier will be added here."

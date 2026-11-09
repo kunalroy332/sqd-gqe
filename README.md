@@ -7,7 +7,9 @@ Sample-based quantum diagonalization (SQD) needs good circuits to sample the ele
 
 ## Publication
 
-*Sample-Based Quantum Diagonalization with a Generative Quantum Eigensolver Scaled Up to 70 Qubits*, K. Kumar *et al.* (manuscript in preparation; a DOI or arXiv reference will be added here once it is available).
+*A Hardware-Trained Generative Quantum Eigensolver for Sample-Based Quantum Diagonalization of Organotin Hydroxides up to 70 Qubits*, K. Kumar *et al.* (manuscript in preparation; a DOI or arXiv reference will be added here once it is available). If you use this code, please cite the paper; [`CITATION.cff`](CITATION.cff) has the entry. The reports of the runs are on Zenodo: <https://zenodo.org/records/24069330>.
+
+To rerun the analysis of the paper from the stored results, see [`REPRODUCE.md`](REPRODUCE.md).
 
 ## Installation
 
@@ -16,7 +18,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-Python 3.10 or newer is required; a GPU is recommended for training. Running on IBM hardware needs credentials: copy `.env.example` to `.env.local` and fill it in (never commit it). See [`tutorial/03_environment_setup.md`](tutorial/03_environment_setup.md) for cluster setup.
+Python 3.10 or newer is required; a GPU is recommended for training. The base install is the SQD and GQE code only. Optional extras: `.[noise]` (Qiskit Aer, for the `*_noisy_sim` backends), `.[mps]` (cuQuantum and CuPy, for the GPU matrix-product-state samplers, Linux with an NVIDIA GPU; pick the CUDA 12 or 13 wheels to match the node), `.[chem]` (iodata, to rebuild the active spaces from Gaussian checkpoint files) and `.[dev]` (pytest, ruff, pre-commit). Running on IBM hardware needs credentials: copy `.env.example` to `.env.local` and fill it in (never commit it). See [`tutorial/03_environment_setup.md`](tutorial/03_environment_setup.md) for cluster setup.
 
 ## Usage
 
@@ -36,7 +38,9 @@ The notebooks in [`tutorial/`](tutorial) walk through training and inference on 
 | `configs_sqd/` | Hydra configuration for training |
 | `molecules/` | Molecule and active-space definitions (YAML and FCIDUMP) |
 | `benchmark/` | Amortized multi-molecule trainer and analysis tools |
-| `scripts/analysis/` | Inference and circuit-analysis pipeline |
+| `scripts/analysis/` | Inference and circuit-analysis pipeline, and the job generators of the trainings |
+| `data/` | Stored results of the study (the 88 inference runs, the training histories, IBM job records); see [`data/README.md`](data/README.md) |
+| `docs/` | Notes on the MPS samplers and on building the SBD diagonalizer |
 | `slurm/`, `apptainer.def` | Cluster job templates and container definition |
 | `tests/` | Unit tests |
 
