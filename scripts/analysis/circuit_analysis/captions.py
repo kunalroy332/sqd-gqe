@@ -10,7 +10,9 @@
 
 """Captions for make_tables.py (kept separate so wording edits do not touch the table logic)."""
 
-SEE = r"Ranking, selection, shot counts and recovery settings are as in Table~\ref{tab:zeroshot-master}."
+SEE = (r"Ranking, selection, shot counts and recovery settings are as in Table~\ref{tab:zeroshot-master}, except for the E+D picks of the untrained controls: "
+       r"these eight runs were sampled in the first campaign, and their E+D circuits were chosen with the energy rank of the earlier ranking, which used a cap of "
+       r"2{,}000 determinants instead of 40{,}000, added to the rank by distinct bitstrings. Their best, second and merged results use the 40{,}000-determinant ranking.")
 
 PROTOCOL = (
     r"All values come from the fresh-shot re-ranking campaign: every run's ten sampled circuits were re-sampled "
@@ -19,9 +21,9 @@ PROTOCOL = (
     r"electron-number-conserving shots in a subspace of up to 200 most-measured alpha strings (net CI dimension "
     r"40{,}000); circuits with no valid shot have no ranking energy and are excluded. ``Best''/``second'' are the two "
     r"lowest-ranking-energy circuits, ``merged'' pools the shots of every circuit with a finite ranking energy, and "
-    r"``E+D 1''/``E+D 2'' are the two circuits chosen by the rule that combines the rank of the ranking energy (on a "
-    r"2000-dimensional ranking) with the rank by number of distinct measured bitstrings, recovered on the same fresh shots. Every recovery uses a 20{,}000-dimensional "
-    r"subspace and 25 iterations. Errors are relative to the DMRG reference."
+    r"``E+D 1''/``E+D 2'' are the two circuits with the lowest sum of two ranks, the rank of the ranking energy (the same "
+    r"40{,}000-determinant ranking) and the rank by number of distinct measured bitstrings, recovered on the same fresh shots. "
+    r"Every recovery uses $D=20{,}000$ strings per spin sector and 25 iterations. Errors are relative to the DMRG reference."
 )
 
 PENDING = (
@@ -48,7 +50,7 @@ CAPTIONS = {
         r"Zero-shot inference on the SnOH3-me L tier (46 qubits), per lineage and policy. Depth and 2q are the as-submitted (live) "
         r"cost of the best/second circuit; ``valid shots'' is the number of the 100{,}000 shots with the correct electron "
         r"numbers, i.e.\ the data behind each pick. ``SI'' (singles-injected) adds the single-excitation configurations to "
-        r"the best circuit's recovered determinant set and re-diagonalizes. DMRG reference $-479.314216460012$~E$_h$. "
+        r"the best circuit's recovered determinant set and re-diagonalizes. DMRG reference $-479.314216$~E$_h$. "
         + SEE
     ),
     "exc_L": (

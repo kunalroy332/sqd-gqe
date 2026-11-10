@@ -107,7 +107,7 @@ circuits it had selected. All values here come from the re-sampled data. {ncell 
 <li><b>Rank</b>: each circuit's electron-number-conserving shots are expanded to alpha strings and diagonalized once in a subspace of up to
 <b>200</b> most-measured alpha strings (net CI dimension up to 40,000). This is the <em>ranking energy</em>. A circuit with no valid shot (no shot with the correct alpha and beta electron numbers) yields no determinant to diagonalize, so its ranking energy is undefined; it is shown as "n/a", not as an infinite energy, and the circuit is excluded from selection.</li>
 <li><b>Select</b>: <i>best</i> and <i>second</i> are the two circuits with the lowest ranking energy. <i>merged</i> pools the shots of every circuit with a finite ranking energy.
-<i>E+D&nbsp;1</i> and <i>E+D&nbsp;2</i> are the two circuits chosen by the earlier rule: energy rank plus distinct-bitstring rank (computed on a 2000-dimensional ranking).</li>
+<i>E+D&nbsp;1</i> and <i>E+D&nbsp;2</i> are the two circuits with the lowest sum of the energy rank and the distinct-bitstring rank (the same 40,000-determinant ranking; the eight untrained controls use the energy rank of an earlier 2,000-determinant ranking).</li>
 <li><b>Recover</b>: each selected set of shots goes through the iterative configuration-recovery SQD loop (GPU, subspace dimension 20,000, 25 iterations, seed 1234).</li></ol>
 <h2 id="defs">2. Definitions used in every table</h2>
 <ul>
@@ -179,7 +179,7 @@ circuits it had selected. All values here come from the re-sampled data. {ncell 
       '<p>Rows run from the smallest active space (32 qubits) to the largest (70 qubits); within a molecule the A1 policies come first, then the A5 policies. Trained policies and untrained controls are listed in separate blocks.</p>'
       '<div class="note"><b>Two ways of choosing circuits, and why there are five result columns.</b> '
       '<b>best</b> and <b>second</b> are the two circuits (of the 10 sampled) with the lowest ranking energy, where the ranking energy is one diagonalization of that circuit&rsquo;s own valid shots in a subspace of up to 200 alpha strings (net dimension 40,000). '
-      '<b>E+D 1</b> and <b>E+D 2</b> are the two circuits chosen by an earlier rule that combined two ranks: the rank of the ranking energy (computed in a smaller, 2,000-dimensional subspace) '
+      '<b>E+D 1</b> and <b>E+D 2</b> are the two circuits with the lowest sum of two ranks: the rank of the ranking energy (the same 40,000-determinant ranking; only the eight untrained controls use the energy rank of an earlier 2,000-determinant ranking) '
       'and the rank by number of distinct measured bitstrings (more is better); the circuit with the best combined rank is E+D 1 and the next is E+D 2. They are different circuits whenever energy alone and energy-plus-distinctness disagree, '
       'and they are the same circuit as best/second when the rules agree (then the result is simply reused). <b>merged</b> pools the shots of all circuits with a finite ranking energy. '
       'All five are recovered with the same 20,000-dimensional, 25-iteration procedure.</div>'
