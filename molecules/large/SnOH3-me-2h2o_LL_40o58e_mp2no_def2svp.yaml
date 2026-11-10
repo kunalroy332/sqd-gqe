@@ -1,6 +1,5 @@
-# SnOH3-me-2h2o, active space "LL" (40o,58e) from Mitsubishi's MP2-NO-based
-# selection (molecules/large/QC_2026-09-20_calc_MP2-NO-based-AS-Selection-SnOH3Me-nH2O.pdf,
-# MO11-50, 1-indexed). Built on the imported Gaussian MP2 natural
+# SnOH3-me-2h2o, active space "LL" (40o,58e) from an MP2-natural-orbital active-space selection
+# (orbital range MO11-50, 1-indexed). Built on the imported Gaussian MP2 natural
 # orbitals from SnOH3-me-2h2o_s0_mp2_def2svp_FC.fchk (not fresh HF canonical MOs) -- see
 # benchmark/snoh3_nh2o_active_spaces.py.
 #

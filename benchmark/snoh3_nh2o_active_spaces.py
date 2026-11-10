@@ -9,10 +9,9 @@
 # that they have been altered from the originals.
 
 """S/M/L/LL active spaces for the Sn(OH)3-Me-nH2O (n=1,2) hydrate fchk's,
-exactly as selected in Mitsubishi's MP2-NO-based report
-(molecules/large/QC_2026-09-20_calc_MP2-NO-based-AS-Selection-SnOH3Me-nH2O.pdf,
-pages 2 and 3), built on the imported Gaussian MP2 natural orbitals -- same
-convention as benchmark/snoh3_pdf_active_spaces.py (the no-water molecule),
+selected as contiguous ranges of MP2 natural orbitals (the ranges are listed in the code below),
+built on the imported Gaussian MP2 natural orbitals -- same
+convention as benchmark/snoh3_active_spaces.py (the no-water molecule),
 generalized here to two source fchk's instead of one.
 
 Unlike the original SnOH3-me_s0_mp2_def2svp_NO.fchk (2-word Gaussian header,
@@ -170,9 +169,8 @@ def write_yaml(mol_tag: str, name: str, norb: int, nelec: int,
                      f"# casci_energy() raises FciIntractableError here; use ccsd_t_energy() or an\n"
                      f"# SQD self-convergence reference instead.")
 
-    content = f"""# {mol_tag}, active space "{name}" ({norb}o,{nelec}e) from Mitsubishi's MP2-NO-based
-# selection (molecules/large/QC_2026-09-20_calc_MP2-NO-based-AS-Selection-SnOH3Me-nH2O.pdf,
-# MO{mo_lo_1}-{mo_hi_1}, 1-indexed). Built on the imported Gaussian MP2 natural
+    content = f"""# {mol_tag}, active space "{name}" ({norb}o,{nelec}e) from an MP2-natural-orbital active-space
+# selection (orbital range MO{mo_lo_1}-{mo_hi_1}, 1-indexed). Built on the imported Gaussian MP2 natural
 # orbitals from {fchk_name} (not fresh HF canonical MOs) -- see
 # benchmark/snoh3_nh2o_active_spaces.py.
 #

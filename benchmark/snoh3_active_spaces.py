@@ -8,15 +8,14 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""S/M/L/LL active spaces exactly as selected in Mitsubishi's MP2-NO-based
-report (molecules/large/QC_2026-08-07_calc_MP2-NO-based-AS-Selection-SnOH3Me.pdf,
-page 2), built on the imported Gaussian MP2 natural orbitals -- not fresh
+"""S/M/L/LL active spaces of Sn(OH)3-Me, selected as contiguous ranges of MP2 natural orbitals
+(the ranges are listed in the code below), built on the imported Gaussian MP2 natural orbitals -- not fresh
 pyscf HF canonical MOs (see benchmark/snoh3_make_fcidump.py for that,
 smaller, HF-MO-based CAS(8e,8o) space).
 
-PDF MO numbering is 1-indexed and spans MO9-48 (HOMO=MO29, LUMO=MO30);
+MO numbering here is 1-indexed and spans MO9-48 (HOMO=MO29, LUMO=MO30);
 pyscf's mo_coeff / mo_occ arrays are 0-indexed, so every boundary here is
-PDF value minus 1. Verified against this repo's own pyscf HF/def2-svp run,
+the 1-indexed value minus 1. Verified against this repo's own pyscf HF/def2-svp run,
 which reproduces HOMO=29, LUMO=30 (1-indexed) exactly -- see
 docs/snoh3_me_fchk_pipeline.ipynb section 1.
 
@@ -26,10 +25,9 @@ docs/snoh3_me_fchk_pipeline.ipynb section 1.
     L     (23, 32)       14-36                    13-35
     LL    (28, 42)       9-36                     8-35
 
-All four windows share the same upper bound (0-idx MO 35 = PDF MO-36): the
-PDF's caption notes MP2-NO-based LL tops out 3 orbitals below the
-HF-MO-based LL (MO-39) -- "a few higher NOs" beyond MO-36 were flagged in
-the report as possibly worth adding, not yet included in any of these four.
+All four windows share the same upper bound (0-idx MO 35 = MO-36): the MP2-NO-based LL window tops out 3 orbitals below the
+HF-MO-based LL (MO-39); a few higher NOs beyond MO-36 might be worth adding, and are not
+included in any of these four.
 """
 
 from __future__ import annotations

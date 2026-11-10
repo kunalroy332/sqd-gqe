@@ -100,7 +100,7 @@ class MolecularSystem:
                       num_threads: int | None = None):
         """Load the active-space Hamiltonian from a pre-computed FCIDUMP
         (e.g. built on Gaussian MP2 natural orbitals instead of fresh HF
-        canonical MOs -- see benchmark/snoh3_pdf_active_spaces.py) while
+        canonical MOs -- see benchmark/snoh3_active_spaces.py) while
         still building the full-molecule HF/mol from (geometry, basis, ecp)
         for reference-energy reporting (hf.e_tot).
 

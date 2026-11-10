@@ -1,6 +1,5 @@
-# Sn(OH)3-Me, active space "S" (16o,24e) from Mitsubishi's MP2-NO-based
-# selection (molecules/large/QC_2026-08-07_calc_MP2-NO-based-AS-Selection-SnOH3Me.pdf,
-# page 2: MO18-33, 1-indexed). Loads pre-computed active-space integrals from
+# Sn(OH)3-Me, active space "S" (16o,24e) from an MP2-natural-orbital active-space
+# selection (orbital range MO18-33, 1-indexed). Loads pre-computed active-space integrals from
 # the FCIDUMP (built on the imported Gaussian MP2 natural orbitals, not fresh
 # HF canonical MOs -- see docs/report/snoh3_active_space_comparison.md: on
 # this exact window, MP2-NO orbitals lower CASCI energy by ~63 mHa vs HF MOs).

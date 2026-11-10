@@ -1,6 +1,5 @@
-# Sn(OH)3-Me, active space "LL" (28o,42e) from Mitsubishi's MP2-NO-based
-# selection (molecules/large/QC_2026-08-07_calc_MP2-NO-based-AS-Selection-SnOH3Me.pdf,
-# page 2: MO9-36, 1-indexed, includes the Sn4d core). See
+# Sn(OH)3-Me, active space "LL" (28o,42e) from an MP2-natural-orbital active-space
+# selection (orbital range MO9-36, 1-indexed, includes the Sn4d core). See
 # molecules/small/SnOH3-me_S_16o24e_mp2no_def2svp.yaml for the full
 # explanation of from_fcidump()'s geometry/basis role and the ccsd_energy()
 # limitation.
